@@ -40,14 +40,6 @@ trait Actions
                       pageVisibility: PageVisibilityPredicate = DefaultPageVisibilityPredicate)
   = new AuthenticatedBy(authenticationProvider, None, redirectToOrigin, pageVisibility)
 
-  object UnauthorisedAction {
-    def apply(body: PlayRequest, sensitiveDataFormKeys: Seq[String] = Seq.empty): Action[AnyContent] = unauthedAction(Action(body), sensitiveDataFormKeys)
-
-    def async(body: AsyncPlayRequest, sensitiveDataFormKeys: Seq[String] = Seq.empty): Action[AnyContent] = unauthedAction(Action.async(body), sensitiveDataFormKeys)
-
-    private def unauthedAction(body: Action[AnyContent], sensitiveDataFormKeys: Seq[String]): Action[AnyContent] = body
-  }
-
   private def authorised(authenticationProvider: AuthenticationProvider,
                          account: Option[TaxRegime],
                          redirectToOrigin: Boolean,
