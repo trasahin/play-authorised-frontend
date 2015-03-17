@@ -11,19 +11,30 @@ abstract class TaxRegime {
   def unauthorisedLandingPage: Option[String] = None
 }
 
-case class User(userId: String,
-                userAuthority: Authority,
-                nameFromGovernmentGateway: Option[String] = None,
-                decryptedToken: Option[String] = None,
-                actingAsAttorneyFor:Option[ActingAsAttorneyFor]=None) {
+case class User(@deprecated("Use user.userId - see AuthContext", since = "2015-03-12") userId: String,
+                @deprecated("Use principal and/or user - see AuthContext", since = "2015-03-12") userAuthority: Authority,
+                @deprecated("Use principal.name and/or attorney.name - see AuthContext", since = "2015-03-12") nameFromGovernmentGateway: Option[String] = None,
+                @deprecated("Use user.governmentGatewayToken - see AuthContext", since = "2015-03-12") decryptedToken: Option[String] = None,
+                @deprecated("Use principal and attorney fields - see AuthContext", since = "2015-03-12") actingAsAttorneyFor:Option[ActingAsAttorneyFor] = None,
+                attorney: Option[Attorney] = None)
+  extends AuthContext {
 
-  def oid = userId.substring(userId.lastIndexOf("/") + 1)
+  override val user = LoggedInUser(
+    userId = userId,
+    loggedInAt = userAuthority.loggedInAt,
+    previouslyLoggedInAt = userAuthority.previouslyLoggedInAt,
+    governmentGatewayToken = decryptedToken
+  )
 
-  def displayName : Option[String] = nameFromGovernmentGateway
+  override val principal = Principal(
+    name = nameFromGovernmentGateway,
+    accounts = userAuthority.accounts
+  )
+
+  @deprecated("Use AuthContext#principal.name and/or AuthContext#attorney.name", since = "2015-03-12")
+  val displayName: Option[String] = principal.name
+
+
+  @deprecated("Use user.oid", since = "2015-03-12")
+  lazy val oid = user.oid
 }
-
-
-
-
-
-

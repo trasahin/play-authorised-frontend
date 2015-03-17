@@ -4,6 +4,7 @@ import play.api.Logger
 import play.api.mvc.{Result, _}
 import uk.gov.hmrc.play.audit.http.HeaderCarrier
 import uk.gov.hmrc.play.auth.frontend.connectors.AuthConnector
+import uk.gov.hmrc.play.auth.frontend.connectors.domain.Authority
 import uk.gov.hmrc.play.http.SessionKeys
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
@@ -46,21 +47,25 @@ trait UserActionWrapper extends Results {
             Logger.info("user not authorised for " + regime.getClass)
             regime.unauthorisedLandingPage match {
               case Some(redirectUrl) => Future.successful(Right(Redirect(redirectUrl)))
-              case None => authenticationProvider.redirectToLogin(false).map(Right(_))
+              case None => authenticationProvider.redirectToLogin(redirectToOrigin = false).map(Right(_))
             }
           case _ =>
-            Future.successful(Left(User(
-                  userId = userId,
-                  userAuthority = ua,
-                  nameFromGovernmentGateway = request.session.get(SessionKeys.name),
-                  decryptedToken = tokenOption)))
+            Future.successful(Left(constructAuthContext(userId, ua, tokenOption)))
         }
         case _ =>
           Logger.warn(s"No authority found for user id '$userId' from '${request.remoteAddress}'")
-          authenticationProvider.redirectToLogin(false).map {
+          authenticationProvider.redirectToLogin(redirectToOrigin = false).map {
             result =>
               Right(result.withNewSession)
           }
       }
+  }
+
+  private def constructAuthContext(userId: String, authority: Authority, governmentGatewayToken: Option[String])(implicit request: Request[AnyContent]): User = {
+    new User(
+      userId = userId,
+      userAuthority = authority,
+      nameFromGovernmentGateway = request.session.get(SessionKeys.name),
+      decryptedToken = governmentGatewayToken)
   }
 }
