@@ -31,10 +31,10 @@ case class User(@deprecated("Use user.userId - see AuthContext", since = "2015-0
     accounts = userAuthority.accounts
   )
 
-  @deprecated("Use AuthContext#principal.name and/or AuthContext#attorney.name", since = "2015-03-12")
+  @deprecated("Use principal.name and/or attorney.name - see AuthContext", since = "2015-03-12")
   val displayName: Option[String] = principal.name
 
 
-  @deprecated("Use user.oid", since = "2015-03-12")
+  @deprecated("Use user.oid - see AuthContext", since = "2015-03-12")
   lazy val oid = user.oid
 }

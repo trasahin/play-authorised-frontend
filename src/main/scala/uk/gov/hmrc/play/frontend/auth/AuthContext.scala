@@ -38,8 +38,25 @@ private[auth] class AuthenticationContext(override val user: LoggedInUser, overr
 
 object AuthContext {
 
-  def apply(user: LoggedInUser, principal: Principal, attorney: Option[Attorney]): AuthContext = {
+  def apply(user: LoggedInUser, principal: Principal, attorney: Option[Attorney]): User = {
     new AuthenticationContext(user, principal, attorney)
+  }
+
+  def apply(authority: Authority, governmentGatewayToken: Option[String], nameFromSession: Option[String]): User = {
+
+    AuthContext(
+      user = LoggedInUser(
+        userId = authority.uri,
+        loggedInAt = authority.loggedInAt,
+        previouslyLoggedInAt = authority.previouslyLoggedInAt,
+        governmentGatewayToken = governmentGatewayToken
+      ),
+      principal = Principal(
+        name = nameFromSession,
+        accounts = authority.accounts
+      ),
+      attorney = None
+    )
   }
 
   def unapply(authContext: AuthContext): Option[(LoggedInUser, Principal, Option[Attorney])] = {

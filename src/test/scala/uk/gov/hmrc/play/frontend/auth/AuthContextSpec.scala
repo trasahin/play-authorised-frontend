@@ -19,7 +19,7 @@ class AuthContextSpec extends UnitSpec {
     sa = Some(SaAccount(link = "/sa/www", utr = SaUtr("1231231233")))
   )
 
-  val principalName = Some("Bob Client")
+  val nameInSession = Some("Bob Client")
 
   val loggedInUser = LoggedInUser(
     userId = userId,
@@ -29,7 +29,7 @@ class AuthContextSpec extends UnitSpec {
   )
 
   val principal = Principal(
-    name = principalName,
+    name = nameInSession,
     accounts = accounts
   )
 
@@ -47,7 +47,7 @@ class AuthContextSpec extends UnitSpec {
   val user = User(
     userId = userId,
     userAuthority = authority,
-    nameFromGovernmentGateway = principalName,
+    nameFromGovernmentGateway = nameInSession,
     decryptedToken = governmentGatewayToken,
     actingAsAttorneyFor = None,
     attorney = Some(attorney)
@@ -63,7 +63,7 @@ class AuthContextSpec extends UnitSpec {
         case User(xUserId, xAuthority, xNameFromGovernmentGateway, xDecryptedToken, xActingAsAttorneyFor, Some(xAttorney)) =>
           xUserId shouldBe userId
           xAuthority shouldBe authority
-          xNameFromGovernmentGateway shouldBe principalName
+          xNameFromGovernmentGateway shouldBe nameInSession
           xDecryptedToken shouldBe governmentGatewayToken
           xActingAsAttorneyFor shouldBe None
           xAttorney shouldBe attorney
@@ -83,12 +83,29 @@ class AuthContextSpec extends UnitSpec {
 
   "The AuthContext apply method" should {
 
-    "Return a valid AuthenticationContext" in {
+    "Construct a valid AuthContext (User) for the supplied user, principal and attorney" in {
       AuthContext(loggedInUser, principal, Some(attorney)) shouldBe authenticationContext
       authenticationContext shouldBe AuthContext(loggedInUser, principal, Some(attorney))
 
       AuthContext(loggedInUser, principal, Some(attorney)) shouldBe user
       user shouldBe AuthContext(loggedInUser, principal, Some(attorney))
+    }
+
+    "Construct a valid AuthContext (User) given an authority and values from the session (no delegation)" in {
+
+      val authContext = AuthContext(authority, governmentGatewayToken, nameInSession)
+
+      authContext.user shouldBe LoggedInUser(authority.uri, authority.loggedInAt, authority.previouslyLoggedInAt, governmentGatewayToken)
+      authContext.principal shouldBe Principal(nameInSession, accounts)
+      authContext.attorney shouldBe None
+
+      // Check deprecated user fields:
+
+      authContext.userId shouldBe authority.uri
+      authContext.userAuthority shouldBe authority
+      authContext.nameFromGovernmentGateway shouldBe nameInSession
+      authContext.decryptedToken shouldBe governmentGatewayToken
+      authContext.actingAsAttorneyFor shouldBe None
     }
   }
 

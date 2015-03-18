@@ -7,7 +7,9 @@ import scala.concurrent.Future
 trait Actions
   extends SessionTimeoutWrapper
   with UserActionWrapper
-  with Authoriser {
+  with AuthContextService
+  with Authoriser
+  with Results {
 
   private type PlayRequest = (Request[AnyContent] => Result)
   private type AsyncPlayRequest = (Request[AnyContent] => Future[Result])
