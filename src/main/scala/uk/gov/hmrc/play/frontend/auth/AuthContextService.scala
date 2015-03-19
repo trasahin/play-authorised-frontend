@@ -4,7 +4,6 @@ import play.api.Logger
 import play.api.mvc.{AnyContent, Request, Result}
 import uk.gov.hmrc.play.audit.http.HeaderCarrier
 import uk.gov.hmrc.play.auth.frontend.connectors.AuthConnector
-import uk.gov.hmrc.play.frontend.auth.delegation.DelegationData
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
 import scala.concurrent.Future

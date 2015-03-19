@@ -1,7 +1,7 @@
-package uk.gov.hmrc.play.frontend.auth.delegation.connectors
+package uk.gov.hmrc.play.frontend.auth.connectors
 
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.frontend.auth.delegation.DelegationData
+import uk.gov.hmrc.play.frontend.auth.DelegationData
 import uk.gov.hmrc.play.http.{HttpDelete, HttpGet, HttpPut}
 
 import scala.concurrent.Future

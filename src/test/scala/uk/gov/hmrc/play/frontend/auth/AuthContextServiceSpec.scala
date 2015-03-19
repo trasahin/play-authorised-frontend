@@ -15,9 +15,9 @@ class AuthContextServiceSpec extends UnitSpec with MockitoSugar {
 
   private implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  "The currentAuthContext method, when not delegating" should {
+  "When not delegating, the currentAuthContext method" should {
 
-    "combine the passed in userId, governmentGatewayToken and session name and combine with the current authority to create the AuthContext" in new TestCase {
+    "combine the passed in userId, governmentGatewayToken and session name with the current authority to create the AuthContext" in new TestCase {
 
       when(mockAuthConnector.currentAuthority).thenReturn(Future.successful(Some(authority)))
 
@@ -97,32 +97,5 @@ class AuthContextServiceSpec extends UnitSpec with MockitoSugar {
       loggedInAt = loggedInAt,
       previouslyLoggedInAt = previouslyLoggedInAt
     )
-
-//    val expectedPrincipalName = Some("Bob Client")
-//
-//    val expectedLoggedInUser = LoggedInUser(
-//      userId = userId,
-//      loggedInAt = loggedInAt,
-//      previouslyLoggedInAt = previouslyLoggedInAt,
-//      governmentGatewayToken = Some(governmentGatewayToken)
-//    )
-//
-//    val expectedPrincipal = Principal(
-//      name = expectedPrincipalName,
-//      accounts = accounts
-//    )
-//
-//    val attorney = Attorney("Dave Agent", Link(new URI("http://stuff/blah"), "Back to dashboard"))
-//
-//    val authenticationContext: AuthenticationContext = new AuthenticationContext(loggedInUser, principal, Some(attorney))
-//
-//    val user = User(
-//      userId = userId,
-//      userAuthority = authority,
-//      nameFromGovernmentGateway = principalName,
-//      decryptedToken = governmentGatewayToken,
-//      actingAsAttorneyFor = None,
-//      attorney = Some(attorney)
-//    )
   }
 }

@@ -20,7 +20,7 @@ case class LoggedInUser(userId: String,loggedInAt: Option[DateTime], previouslyL
 
 case class Principal(name: Option[String], accounts: Accounts)
 
-case class Attorney(name: String, returnLink: Link)
+case class Attorney(name: Option[String], returnLink: Link)
 
 case class Link(url: URI, text: String)
 
@@ -42,7 +42,12 @@ object AuthContext {
     new AuthenticationContext(user, principal, attorney)
   }
 
-  def apply(authority: Authority, governmentGatewayToken: Option[String], nameFromSession: Option[String]): User = {
+  def apply(authority: Authority, governmentGatewayToken: Option[String], nameFromSession: Option[String], delegationData: Option[DelegationData] = None): User = {
+
+    val (principalName, accounts, attorney) = delegationData match {
+      case Some(delegation) => (delegation.principalName, delegation.accounts, Some(delegation.attorney))
+      case None => (nameFromSession, authority.accounts, None)
+    }
 
     AuthContext(
       user = LoggedInUser(
@@ -52,10 +57,10 @@ object AuthContext {
         governmentGatewayToken = governmentGatewayToken
       ),
       principal = Principal(
-        name = nameFromSession,
-        accounts = authority.accounts
+        name = principalName,
+        accounts = accounts
       ),
-      attorney = None
+      attorney = attorney
     )
   }
 

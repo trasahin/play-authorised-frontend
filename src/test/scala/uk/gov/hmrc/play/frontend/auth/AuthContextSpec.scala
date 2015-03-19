@@ -3,130 +3,218 @@ package uk.gov.hmrc.play.frontend.auth
 import java.net.URI
 
 import org.joda.time.{DateTimeZone, DateTime}
-import uk.gov.hmrc.domain.{SaUtr, Nino}
-import uk.gov.hmrc.play.auth.frontend.connectors.domain.{Authority, SaAccount, Accounts, PayeAccount}
+import uk.gov.hmrc.domain.{Vrn, SaUtr, Nino}
+import uk.gov.hmrc.play.auth.frontend.connectors.domain._
 import uk.gov.hmrc.play.test.UnitSpec
 
 class AuthContextSpec extends UnitSpec {
 
-  val userId = "/auth/oid/1234567890"
-  val loggedInAt = Some(new DateTime(2015, 11, 22, 11, 33, 15, 234, DateTimeZone.UTC))
-  val previouslyLoggedInAt = Some(new DateTime(2014, 8, 3, 9, 25, 44, 342, DateTimeZone.UTC))
-  val governmentGatewayToken = Some("token")
+  object SessionData {
 
-  val accounts = Accounts(
-    paye = Some(PayeAccount(link = "/paye/abc", nino = Nino("AB124512C"))),
-    sa = Some(SaAccount(link = "/sa/www", utr = SaUtr("1231231233")))
+    val userId = "/auth/oid/1234567890"
+    val name = Some("Gary 'Government' Gateway")
+    val governmentGatewayToken = Some("token")
+  }
+  
+  object AuthData {
+    
+    val loggedInAt = Some(new DateTime(2015, 11, 22, 11, 33, 15, 234, DateTimeZone.UTC))
+    val previouslyLoggedInAt = Some(new DateTime(2014, 8, 3, 9, 25, 44, 342, DateTimeZone.UTC))
+
+
+    val accounts = Accounts(
+      paye = Some(PayeAccount(link = "/paye/abc", nino = Nino("AB124512C"))),
+      sa = Some(SaAccount(link = "/sa/www", utr = SaUtr("1231231233")))
+    )
+
+    val authority = Authority(
+      uri = SessionData.userId,
+      accounts = accounts,
+      loggedInAt = loggedInAt,
+      previouslyLoggedInAt = previouslyLoggedInAt
+    )
+  }
+  
+  object DelegationServiceData {
+
+    val principalName = "Bill Principal"
+    val attorneyName = "Bob Attorney"
+    val returnLink = Link(new URI("http://agentdashboard.com"), "Return to your dashboard")
+    val principalAccounts = Accounts(vat = Some(VatAccount("/vat/123123123", Vrn("123123123"))))
+
+    val delegationData = DelegationData(Some(principalName), Some(attorneyName), principalAccounts, returnLink)
+  }
+
+  val expectedLoggedInUser = LoggedInUser(
+    userId = SessionData.userId,
+    loggedInAt = AuthData.loggedInAt,
+    previouslyLoggedInAt = AuthData.previouslyLoggedInAt,
+    governmentGatewayToken = SessionData.governmentGatewayToken
   )
+  
+  object ExpectationsWhenNotDelegating {
+    
+    val principal = Principal(
+      name = SessionData.name,
+      accounts = AuthData.accounts
+    )
+  
+    val authenticationContext: AuthenticationContext = new AuthenticationContext(expectedLoggedInUser, principal, None)
 
-  val nameInSession = Some("Bob Client")
+    val user = User(
+      userId = SessionData.userId,
+      userAuthority = AuthData.authority,
+      nameFromGovernmentGateway = SessionData.name,
+      decryptedToken = SessionData.governmentGatewayToken,
+      actingAsAttorneyFor = None,
+      attorney = None
+    )
+  }
 
-  val loggedInUser = LoggedInUser(
-    userId = userId,
-    loggedInAt = loggedInAt,
-    previouslyLoggedInAt = previouslyLoggedInAt,
-    governmentGatewayToken = governmentGatewayToken
-  )
+  object ExpectationsWhenDelegating {
 
-  val principal = Principal(
-    name = nameInSession,
-    accounts = accounts
-  )
+    val principal = Principal(
+      name = Some(DelegationServiceData.principalName),
+      accounts = DelegationServiceData.principalAccounts
+    )
 
-  val attorney = Attorney("Dave Agent", Link(new URI("http://stuff/blah"), "Back to dashboard"))
+    val attorney = Attorney(Some(DelegationServiceData.attorneyName), DelegationServiceData.returnLink)
 
-  val authenticationContext: AuthenticationContext = new AuthenticationContext(loggedInUser, principal, Some(attorney))
+    val authenticationContext = new AuthenticationContext(expectedLoggedInUser, principal, Some(attorney))
 
-  val authority = Authority(
-    uri = userId,
-    accounts = accounts,
-    loggedInAt = loggedInAt,
-    previouslyLoggedInAt = previouslyLoggedInAt
-  )
-
-  val user = User(
-    userId = userId,
-    userAuthority = authority,
-    nameFromGovernmentGateway = nameInSession,
-    decryptedToken = governmentGatewayToken,
-    actingAsAttorneyFor = None,
-    attorney = Some(attorney)
-  )
+    val user = User(
+      userId = SessionData.userId,
+      userAuthority = AuthData.authority.copy(accounts = DelegationServiceData.principalAccounts),
+      nameFromGovernmentGateway = Some(DelegationServiceData.principalName),
+      decryptedToken = SessionData.governmentGatewayToken,
+      actingAsAttorneyFor = None,
+      attorney = Some(attorney)
+    )
+  }
 
   "An AuthenticationContext" should {
 
-    "inherit the unapply method from User" in {
+    "correctly implement User when not delegating" in {
 
-      val u: User = authenticationContext
+      val authenticationContext = new AuthenticationContext(
+        expectedLoggedInUser,
+        ExpectationsWhenNotDelegating.principal,
+        None
+      )
 
-      u match {
-        case User(xUserId, xAuthority, xNameFromGovernmentGateway, xDecryptedToken, xActingAsAttorneyFor, Some(xAttorney)) =>
-          xUserId shouldBe userId
-          xAuthority shouldBe authority
-          xNameFromGovernmentGateway shouldBe nameInSession
-          xDecryptedToken shouldBe governmentGatewayToken
-          xActingAsAttorneyFor shouldBe None
-          xAttorney shouldBe attorney
-        case _ => fail("Expected initial unapply method to succeed")
-      }
+      val expectedUser = ExpectationsWhenNotDelegating.user
+
+      authenticationContext shouldBe expectedUser
+      expectedUser shouldBe authenticationContext
+
+      authenticationContext.hashCode shouldBe expectedUser.hashCode
     }
 
-    "be a User" in {
-      authenticationContext shouldBe user
-      user shouldBe authenticationContext
-    }
+    "correctly implement User when delegating" in {
 
-    "have the same hashcode as the corresponding user" in {
-      authenticationContext.hashCode shouldBe user.hashCode
+      val authenticationContext = new AuthenticationContext(
+        expectedLoggedInUser,
+        ExpectationsWhenDelegating.principal,
+        Some(ExpectationsWhenDelegating.attorney))
+
+      val expectedUser = ExpectationsWhenDelegating.user
+
+      authenticationContext shouldBe expectedUser
+      expectedUser shouldBe authenticationContext
+
+      authenticationContext.hashCode shouldBe expectedUser.hashCode
     }
   }
 
   "The AuthContext apply method" should {
 
-    "Construct a valid AuthContext (User) for the supplied user, principal and attorney" in {
-      AuthContext(loggedInUser, principal, Some(attorney)) shouldBe authenticationContext
-      authenticationContext shouldBe AuthContext(loggedInUser, principal, Some(attorney))
+    "Construct a valid AuthContext (User) for the supplied user, principal and attorney when delegating" in {
 
-      AuthContext(loggedInUser, principal, Some(attorney)) shouldBe user
-      user shouldBe AuthContext(loggedInUser, principal, Some(attorney))
+      import ExpectationsWhenDelegating._
+
+      val authContext =  AuthContext(expectedLoggedInUser, principal, Some(attorney))
+
+      authContext shouldBe authenticationContext
+      authContext shouldBe user
     }
 
-    "Construct a valid AuthContext (User) given an authority and values from the session (no delegation)" in {
+    "Construct a valid AuthContext (User) for the supplied user and principal when not delegating" in {
 
-      val authContext = AuthContext(authority, governmentGatewayToken, nameInSession)
+      import ExpectationsWhenNotDelegating._
 
-      authContext.user shouldBe LoggedInUser(authority.uri, authority.loggedInAt, authority.previouslyLoggedInAt, governmentGatewayToken)
-      authContext.principal shouldBe Principal(nameInSession, accounts)
-      authContext.attorney shouldBe None
+      val authContext =  AuthContext(expectedLoggedInUser, principal, None)
 
-      // Check deprecated user fields:
+      authContext shouldBe authenticationContext
+      authContext shouldBe user
+    }
 
-      authContext.userId shouldBe authority.uri
-      authContext.userAuthority shouldBe authority
-      authContext.nameFromGovernmentGateway shouldBe nameInSession
-      authContext.decryptedToken shouldBe governmentGatewayToken
-      authContext.actingAsAttorneyFor shouldBe None
+    "Construct a valid AuthContext (User) for the supplied authority, session values and delegation data when delegating" in {
+
+      val authContext = AuthContext(AuthData.authority, SessionData.governmentGatewayToken, SessionData.name, Some(DelegationServiceData.delegationData))
+
+      authContext shouldBe ExpectationsWhenDelegating.authenticationContext
+      authContext shouldBe ExpectationsWhenDelegating.user
+    }
+
+    "Construct a valid AuthContext (User) for the supplied authority and session values and when not delegating" in {
+
+      val authContext = AuthContext(AuthData.authority, SessionData.governmentGatewayToken, SessionData.name, None)
+
+      authContext shouldBe ExpectationsWhenNotDelegating.authenticationContext
+      authContext shouldBe ExpectationsWhenNotDelegating.user
     }
   }
 
   "The AuthContext unapply method" should {
 
-    "Extract the core AuthContext fields from an AuthenticationContext" in {
+    "Extract the core AuthContext fields from an AuthenticationContext when delegating" in {
+
+      import ExpectationsWhenDelegating._
 
       authenticationContext match {
         case AuthContext(usr, prn, Some(att)) =>
-          usr shouldBe loggedInUser
+          usr shouldBe expectedLoggedInUser
           prn shouldBe principal
           att shouldBe attorney
         case _ => fail("Expected a match")
       }
     }
 
-    "cope with an empty Attorney object" in {
-      AuthContext(loggedInUser, principal, None) match {
-        case AuthContext(usr, prn, None) =>
-          usr shouldBe loggedInUser
+    "Extract the core AuthContext fields from a User when delegating" in {
+
+      import ExpectationsWhenDelegating._
+
+      user match {
+        case AuthContext(usr, prn, Some(att)) =>
+          usr shouldBe expectedLoggedInUser
           prn shouldBe principal
+          att shouldBe attorney
+        case _ => fail("Expected a match")
+      }
+    }
+
+    "Extract the core AuthContext fields from an AuthenticationContext when not delegating" in {
+
+      import ExpectationsWhenNotDelegating._
+
+      authenticationContext match {
+        case AuthContext(usr, prn, att) =>
+          usr shouldBe expectedLoggedInUser
+          prn shouldBe principal
+          att shouldBe None
+        case _ => fail("Expected a match")
+      }
+    }
+
+    "Extract the core AuthContext fields from a User when not delegating" in {
+
+      import ExpectationsWhenNotDelegating._
+
+      user match {
+        case AuthContext(usr, prn, att) =>
+          usr shouldBe expectedLoggedInUser
+          prn shouldBe principal
+          att shouldBe None
         case _ => fail("Expected a match")
       }
     }

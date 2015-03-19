@@ -42,7 +42,7 @@ class UserSpec extends UnitSpec with MockitoSugar {
       nameFromGovernmentGateway = Some("Bob Client"),
       decryptedToken = Some("token"),
       actingAsAttorneyFor = None,
-      attorney = Some(Attorney("Dave Agent", Link(new URI("http://stuff/blah"), "Back to dashboard")))
+      attorney = Some(Attorney(Some("Dave Agent"), Link(new URI("http://stuff/blah"), "Back to dashboard")))
     )
 
     "provide the principal field, containing the name from the (deprecated) nameFromGovernmentGateway field and accounts data from the (deprecated) Authority field" in {
