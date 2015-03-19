@@ -1,13 +1,24 @@
 package uk.gov.hmrc.play.frontend.auth
 
-import play.api.libs.json.Json
 import uk.gov.hmrc.play.auth.frontend.connectors.domain.Accounts
 
-case class DelegationData(principalName: Option[String], attorneyName: Option[String], accounts: Accounts, returnLink: Link) {
+case class DelegationData(principalName: String, attorneyName: String, accounts: Accounts, returnLink: Link) {
   val attorney = Attorney(attorneyName, returnLink)
 }
 
-//private[auth] object DelegationData {
-//  implicit val linkFormat = Json.format[Link]
-//  implicit val format = Json.format[DelegationData]
-//}
+sealed trait DelegationState
+
+case object DelegationOn extends DelegationState {
+  override val toString = "On"
+}
+
+case object DelegationOff extends DelegationState {
+  override val toString = "Off"
+}
+
+object DelegationState {
+
+  def apply(value: Option[String]): DelegationState = {
+    if (value == Some("On")) DelegationOn else DelegationOff
+  }
+}

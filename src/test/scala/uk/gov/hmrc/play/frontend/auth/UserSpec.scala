@@ -1,14 +1,12 @@
 package uk.gov.hmrc.play.frontend.auth
 
-import java.net.URI
-
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import uk.gov.hmrc.domain.{SaUtr, Nino}
 import uk.gov.hmrc.play.auth.frontend.connectors.domain.{SaAccount, PayeAccount, Accounts, Authority}
 import uk.gov.hmrc.play.test.UnitSpec
 
-class UserSpec extends UnitSpec with MockitoSugar {
+class UserSpec extends UnitSpec with MockitoSugar with OidConversionSpec[User] {
 
   "a Government Gateway User" should {
 
@@ -42,7 +40,7 @@ class UserSpec extends UnitSpec with MockitoSugar {
       nameFromGovernmentGateway = Some("Bob Client"),
       decryptedToken = Some("token"),
       actingAsAttorneyFor = None,
-      attorney = Some(Attorney(Some("Dave Agent"), Link(new URI("http://stuff/blah"), "Back to dashboard")))
+      attorney = Some(Attorney("Dave Agent", Link("http://stuff/blah", "Back to dashboard")))
     )
 
     "provide the principal field, containing the name from the (deprecated) nameFromGovernmentGateway field and accounts data from the (deprecated) Authority field" in {
@@ -79,12 +77,25 @@ class UserSpec extends UnitSpec with MockitoSugar {
       user.copy(decryptedToken = Some("othertoken")).user.governmentGatewayToken shouldBe Some("othertoken")
       user.copy(decryptedToken = None).user.governmentGatewayToken shouldBe None
     }
-
-    "provide the oid parsed from the user id (the value after the last slash)" in {
-      user.oid shouldBe "1234567890"
-      user.copy(userId = "/abc/123/456").oid shouldBe "456"
-      user.copy(userId = "/abcde").oid shouldBe "abcde"
-      user.copy(userId = "abcd").oid shouldBe "abcd"
-    }
   }
+
+  "The oid method" should {
+    successfullyConvertUserIdsToOids()
+  }
+
+  override def constructWithUserId(userId: String) = User(
+    userId = userId,
+    userAuthority = Authority(
+      uri = userId,
+      accounts = Accounts(paye = Some(PayeAccount(link = "/paye/abc", nino = Nino("AB124512C")))),
+      loggedInAt = None,
+      previouslyLoggedInAt = None
+    ),
+    nameFromGovernmentGateway = Some("Bob Client"),
+    decryptedToken = Some("token"),
+    actingAsAttorneyFor = None,
+    attorney = Some(Attorney("Dave Agent", Link("http://stuff/blah", "Back to dashboard")))
+  )
+
+  override def oid(user: User) = user.oid
 }

@@ -3,7 +3,6 @@ package uk.gov.hmrc.play.frontend.auth
 import play.api.Logger
 import play.api.mvc.{Result, _}
 import uk.gov.hmrc.play.audit.http.HeaderCarrier
-import uk.gov.hmrc.play.http.SessionKeys
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
 import scala.concurrent._
@@ -25,7 +24,7 @@ trait UserActionWrapper extends Results {
             authenticationProvider.handleAuthenticated orElse
             handleAuthenticated(taxRegime, authenticationProvider)
 
-        handle(UserCredentials(request.session)).flatMap {
+        handle(UserSessionData(request.session).userCredentials).flatMap {
           case Left(successfullyFoundUser) => userAction(successfullyFoundUser)(request)
           case Right(resultOfFailure) => Action(resultOfFailure)(request)
         }
@@ -37,7 +36,7 @@ trait UserActionWrapper extends Results {
     case UserCredentials(Some(userId), tokenOption) =>
       implicit val hc = HeaderCarrier.fromSessionAndHeaders(request.session, request.headers)
 
-      currentAuthContext(userId, tokenOption, request.session.get(SessionKeys.name)).flatMap {
+      currentAuthContext(UserSessionData(request.session)).flatMap {
 
         case Some(authContext) => taxRegime match {
           case Some(regime) if !regime.isAuthorised(authContext.principal.accounts) =>

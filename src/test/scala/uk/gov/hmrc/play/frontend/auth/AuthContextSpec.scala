@@ -1,7 +1,5 @@
 package uk.gov.hmrc.play.frontend.auth
 
-import java.net.URI
-
 import org.joda.time.{DateTimeZone, DateTime}
 import uk.gov.hmrc.domain.{Vrn, SaUtr, Nino}
 import uk.gov.hmrc.play.auth.frontend.connectors.domain._
@@ -39,10 +37,10 @@ class AuthContextSpec extends UnitSpec {
 
     val principalName = "Bill Principal"
     val attorneyName = "Bob Attorney"
-    val returnLink = Link(new URI("http://agentdashboard.com"), "Return to your dashboard")
+    val returnLink = Link("http://agentdashboard.com", "Return to your dashboard")
     val principalAccounts = Accounts(vat = Some(VatAccount("/vat/123123123", Vrn("123123123"))))
 
-    val delegationData = DelegationData(Some(principalName), Some(attorneyName), principalAccounts, returnLink)
+    val delegationData = DelegationData(principalName, attorneyName, principalAccounts, returnLink)
   }
 
   val expectedLoggedInUser = LoggedInUser(
@@ -78,7 +76,7 @@ class AuthContextSpec extends UnitSpec {
       accounts = DelegationServiceData.principalAccounts
     )
 
-    val attorney = Attorney(Some(DelegationServiceData.attorneyName), DelegationServiceData.returnLink)
+    val attorney = Attorney(DelegationServiceData.attorneyName, DelegationServiceData.returnLink)
 
     val authenticationContext = new AuthenticationContext(expectedLoggedInUser, principal, Some(attorney))
 

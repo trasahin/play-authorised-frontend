@@ -12,6 +12,7 @@ import scala.concurrent._
 case class UserCredentials(userId: Option[String], token: Option[String])
 
 object UserCredentials {
+  @deprecated("Use UserSessionData.apply(...).userCredentials", since = "March 2015")
   def apply(session: Session): UserCredentials = UserCredentials(session.get(SessionKeys.userId), session.get(SessionKeys.token))
 }
 
