@@ -26,6 +26,23 @@ class AuthContextServiceSpec extends UnitSpec with MockitoSugar {
 
   private implicit val hc: HeaderCarrier = HeaderCarrier()
 
+  "When the userId in the session is missing, the currentAuthContext" should {
+
+    "return None" in new TestCase(DelegationOnAndDataAvailable) {
+
+      val sessionData = UserSessionData(
+        userId = None,
+        governmentGatewayToken = Some(session.governmentGatewayToken),
+        name = Some(session.name),
+        delegationState = DelegationOn
+      )
+
+      await(service.currentAuthContext(sessionData)) shouldBe None
+
+      verifyZeroInteractions(mockAuthConnector, mockDelegationConnector)
+    }
+  }
+
   "When the delegation session flag is 'Off', and no delegation connector is available, the currentAuthContext method" should {
     behaveAsExpectedWithoutDelegation(DelegationOffAndNoConnector)
     returnNoneIfTheAuthorityIsMissingOrInvalid(DelegationOffAndNoConnector)
