@@ -28,6 +28,7 @@ object HmrcBuild extends Build {
     .settings(nexusPublishingSettings : _*)
     .settings(SbtBuildInfo(): _*)
     .disablePlugins(sbt.plugins.JUnitXmlReportPlugin)
+    .settings(resolvers += Resolver.bintrayRepo("hmrc", "releases"))
 }
 
 private object AppDependencies {
