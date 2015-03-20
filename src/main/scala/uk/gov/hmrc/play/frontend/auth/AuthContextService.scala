@@ -1,7 +1,6 @@
 package uk.gov.hmrc.play.frontend.auth
 
 import play.api.Logger
-import play.api.mvc.Result
 import uk.gov.hmrc.play.audit.http.HeaderCarrier
 import uk.gov.hmrc.play.auth.frontend.connectors.AuthConnector
 import uk.gov.hmrc.play.auth.frontend.connectors.domain.Authority
@@ -61,15 +60,5 @@ private[auth] trait AuthContextService {
         }
       case _ => Future.successful(None)
     }
-  }
-
-  def beginDelegation(result: Result, delegationData: DelegationData)(implicit hc: HeaderCarrier): Future[Result] = {
-    //    Future.successful(result.addingToSession("abc" -> "123"))
-    ???
-  }
-
-  def endDelegation(result: Result)(implicit hc: HeaderCarrier): Future[Result] = {
-    //        result.removingFromSession()
-    ???
   }
 }

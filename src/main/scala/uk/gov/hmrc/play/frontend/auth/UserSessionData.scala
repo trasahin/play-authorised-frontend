@@ -9,7 +9,7 @@ case class UserSessionData(userId: Option[String], governmentGatewayToken: Optio
 
 object UserSessionData {
 
-  private val DelegationStateSessionKey = "delegationState"
+  private[auth] val DelegationStateSessionKey = "delegationState"
 
   def apply(session: Session): UserSessionData = UserSessionData(
     userId = session.get(SessionKeys.userId),
