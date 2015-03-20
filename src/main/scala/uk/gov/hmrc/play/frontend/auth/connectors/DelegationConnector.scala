@@ -2,13 +2,9 @@ package uk.gov.hmrc.play.frontend.auth.connectors
 
 import play.api.libs.json.Json
 import uk.gov.hmrc.play.audit.http.HeaderCarrier
-import uk.gov.hmrc.play.audit.http.config.{AuditingConfig, LoadAuditingConfig}
-import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.config.{AppName, RunMode, ServicesConfig}
 import uk.gov.hmrc.play.frontend.auth.{DelegationData, Link}
 import uk.gov.hmrc.play.http._
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
-import uk.gov.hmrc.play.http.ws.WSHttp
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
@@ -72,15 +68,3 @@ private[auth] trait DelegationConnector {
 
 case class DelegationServiceException(message: String, method: String, url: String, cause: Throwable = null)
   extends RuntimeException(s"$message: $method $url", cause)
-
-private[auth] object DelegationConnector extends DelegationConnector with ServicesConfig {
-
-  override protected val serviceUrl = baseUrl("delegation")
-
-  override protected lazy val http = new WSHttp with AppName with RunMode {
-    override def auditConnector: AuditConnector = new AuditConnector {
-      override def auditingConfig: AuditingConfig = LoadAuditingConfig(s"$env.auditing")
-    }
-  }
-}
-

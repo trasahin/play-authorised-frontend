@@ -7,7 +7,6 @@ import uk.gov.hmrc.domain.{Nino, SaUtr}
 import uk.gov.hmrc.play.audit.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.auth.frontend.connectors.domain.{Accounts, PayeAccount, SaAccount}
-import uk.gov.hmrc.play.config.{AppName, RunMode}
 import uk.gov.hmrc.play.frontend.auth.{DelegationData, Link}
 import uk.gov.hmrc.play.http.ws.WSHttp
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
@@ -137,12 +136,11 @@ class DelegationConnectorSpec extends UnitSpec with WithFakeApplication with Wir
 
     val connector = new DelegationConnector {
 
-      val mockAuditConnector = mock[AuditConnector]
-
       override protected val serviceUrl = baseUrl
 
-      override protected lazy val http = new WSHttp with AppName with RunMode {
+      override protected lazy val http = new WSHttp {
         override def auditConnector: AuditConnector = mock[AuditConnector]
+        override def appName: String = "DelegationConnectorSpec"
       }
     }
 
