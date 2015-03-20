@@ -26,7 +26,7 @@ class AuthContextServiceSpec extends UnitSpec with MockitoSugar {
 
   private implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  "When the userId in the session is missing, the currentAuthContext" should {
+  "When the userId in the session is missing, the currentAuthContext method" should {
 
     "return None" in new TestCase(DelegationOnAndDataAvailable) {
 
@@ -81,7 +81,7 @@ class AuthContextServiceSpec extends UnitSpec with MockitoSugar {
       authContext shouldBe Some(AuthContext(
         user = LoggedInUser(session.userId, userAtKeyboard.loggedInAt, userAtKeyboard.previouslyLoggedInAt, Some(session.governmentGatewayToken)),
         principal = Principal(Some(delegationData.principalName), delegationData.accounts),
-        attorney = Some(Attorney(delegationData.attorneyName, delegationData.returnLink))
+        attorney = Some(Attorney(delegationData.attorneyName, delegationData.link))
       ))
     }
 
@@ -101,7 +101,7 @@ class AuthContextServiceSpec extends UnitSpec with MockitoSugar {
       authContext shouldBe Some(AuthContext(
         user = LoggedInUser(session.userId, userAtKeyboard.loggedInAt, userAtKeyboard.previouslyLoggedInAt, None),
         principal = Principal(Some(delegationData.principalName), delegationData.accounts),
-        attorney = Some(Attorney(delegationData.attorneyName, delegationData.returnLink))
+        attorney = Some(Attorney(delegationData.attorneyName, delegationData.link))
       ))
     }
 
@@ -216,7 +216,7 @@ class AuthContextServiceSpec extends UnitSpec with MockitoSugar {
       principalName = "Bill Principal",
       attorneyName = "Brian Agent",
       accounts = Accounts(ct = Some(CtAccount("/some/path", CtUtr("1234554321")))),
-      returnLink = Link("/some/url", "Back to your dashboard")
+      link = Link("/some/url", "Back to your dashboard")
     )
 
     if (testSetup.returnDataFromDelegationService) {
