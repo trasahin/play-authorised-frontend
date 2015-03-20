@@ -1,6 +1,7 @@
 package uk.gov.hmrc.play.frontend.auth.connectors
 
 import play.api.libs.json.Json
+import play.api.mvc.Results
 import uk.gov.hmrc.play.audit.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.config.{AuditingConfig, LoadAuditingConfig}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
@@ -43,7 +44,15 @@ private[auth] trait DelegationConnector {
     http.GET[Option[DelegationData]](delegationUrl(oid))
   }
 
-  def put(oid: String, delegationData: DelegationData): Future[Unit] = ???
+  def put(oid: String, delegationData: DelegationData)(implicit hc: HeaderCarrier): Future[Unit] = {
+
+    http.PUT[DelegationData](delegationUrl(oid), delegationData, (response: Future[HttpResponse], _: String) => response).map { response =>
+      response.status match {
+        case 201 => ()
+        case unexpectedStatus => throw DelegationServiceException(s"Unexpected response code '$unexpectedStatus'", "PUT", delegationUrl(oid))
+      }
+    }
+  }
 
   def delete(oid: String): Future[Unit] = ???
 }

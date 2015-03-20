@@ -20,51 +20,19 @@ class DelegationConnectorSpec extends UnitSpec with WithFakeApplication with Wir
 
     "return the delegation data returned from the service, if the response code is 200" in new TestCase {
 
-      val oid = "1234"
+      stubFor(get(urlEqualTo(s"/oid/$oid")).willReturn(aResponse().withStatus(200).withBody(delegationDataJson)))
 
-      val responseBody = Json.obj(
-        "attorneyName" -> "Bob Agent",
-        "principalName" -> "Dave Client",
-        "link" -> Json.obj(
-          "url" -> "http://taxplatform/some/dashboard",
-          "text" -> "Back to dashboard"
-        ),
-        "accounts" -> Json.obj(
-          "paye" -> Json.obj(
-            "link" -> "http://paye/some/path",
-            "nino" -> "AB123456D"
-          ),
-          "ct" -> JsNull,
-          "sa" -> Json.obj(
-            "link" -> "http://sa/some/utr",
-            "utr" -> "1234567890"
-          )
-        )
-      ).toString()
-
-      stubFor(get(urlEqualTo(s"/oid/$oid")).willReturn(aResponse().withStatus(200).withBody(responseBody)))
-
-      await(connector.get(oid)) shouldBe Some(DelegationData(
-        principalName = "Dave Client",
-        attorneyName = "Bob Agent",
-        accounts = Accounts(
-          paye = Some(PayeAccount(link = "http://paye/some/path", nino = Nino("AB123456D"))),
-          sa = Some(SaAccount(link = "http://sa/some/utr", utr = SaUtr("1234567890")))
-        ),
-        link = Link(url = "http://taxplatform/some/dashboard", text = "Back to dashboard")
-      ))
+      await(connector.get(oid)) shouldBe Some(delegationDataObject)
     }
 
     "return None when the response code is 404" in new TestCase {
-
-      val oid = "1234"
 
       stubFor(get(urlEqualTo(s"/oid/$oid")).willReturn(aResponse().withStatus(404)))
 
       await(connector.get(oid)) shouldBe None
     }
 
-    "throw an exception if the response is anything else" in new TestCase {
+    "throw an exception if the response code is anything other than 200 or 404" in new TestCase {
 
       val oid204 = "204oid"
       val oid400 = "400oid"
@@ -77,6 +45,50 @@ class DelegationConnectorSpec extends UnitSpec with WithFakeApplication with Wir
       a [DelegationServiceException] should be thrownBy await(connector.get(oid204))
       a [DelegationServiceException] should be thrownBy await(connector.get(oid400))
       a [DelegationServiceException] should be thrownBy await(connector.get(oid500))
+    }
+
+    "throw an exception if the response is not valid JSON" in new TestCase {
+
+      stubFor(get(urlEqualTo(s"/oid/$oid")).willReturn(aResponse().withStatus(200).withBody("{ not _ json :")))
+
+      a [DelegationServiceException] should be thrownBy await(connector.get(oid))
+    }
+
+    "throw an exception if the response is valid JSON, but not representing Delegation Data" in new TestCase {
+
+      stubFor(get(urlEqualTo(s"/oid/$oid")).willReturn(aResponse().withStatus(200).withBody("""{"valid":"json"}""")))
+
+      a [DelegationServiceException] should be thrownBy await(connector.get(oid))
+    }
+  }
+
+  "The PUT method" should {
+
+    "send the delegation data to the DelegationService, and succeed if the response code is 201" in new TestCase {
+
+      stubFor(put(urlEqualTo(s"/oid/$oid")).withRequestBody(equalToJson(delegationDataJson)).willReturn(aResponse().withStatus(201)))
+
+      await(connector.put(oid, delegationDataObject))
+
+      verify(putRequestedFor(urlEqualTo(s"/oid/$oid")).withRequestBody(equalToJson(delegationDataJson)))
+    }
+
+    "send the delegation data to the DelegationService, and fail if the response code is anything other than 201" in new TestCase {
+
+      val oid200 = "200oid"
+      val oid204 = "204oid"
+      val oid400 = "400oid"
+      val oid500 = "500oid"
+
+      stubFor(put(urlEqualTo(s"/oid/$oid200")).withRequestBody(equalToJson(delegationDataJson)).willReturn(aResponse().withStatus(200)))
+      stubFor(put(urlEqualTo(s"/oid/$oid204")).withRequestBody(equalToJson(delegationDataJson)).willReturn(aResponse().withStatus(204)))
+      stubFor(put(urlEqualTo(s"/oid/$oid400")).withRequestBody(equalToJson(delegationDataJson)).willReturn(aResponse().withStatus(400)))
+      stubFor(put(urlEqualTo(s"/oid/$oid500")).withRequestBody(equalToJson(delegationDataJson)).willReturn(aResponse().withStatus(500)))
+
+      a [DelegationServiceException] should be thrownBy await(connector.put(oid200, delegationDataObject))
+      a [DelegationServiceException] should be thrownBy await(connector.put(oid204, delegationDataObject))
+      a [DelegationServiceException] should be thrownBy await(connector.put(oid400, delegationDataObject))
+      a [DelegationServiceException] should be thrownBy await(connector.put(oid500, delegationDataObject))
     }
   }
 
@@ -94,5 +106,36 @@ class DelegationConnectorSpec extends UnitSpec with WithFakeApplication with Wir
         override def auditConnector: AuditConnector = mock[AuditConnector]
       }
     }
+
+    val oid = "1234"
+
+    val delegationDataObject = DelegationData(
+      principalName = "Dave Client",
+      attorneyName = "Bob Agent",
+      accounts = Accounts(
+        paye = Some(PayeAccount(link = "http://paye/some/path", nino = Nino("AB123456D"))),
+        sa = Some(SaAccount(link = "http://sa/some/utr", utr = SaUtr("1234567890")))
+      ),
+      link = Link(url = "http://taxplatform/some/dashboard", text = "Back to dashboard")
+    )
+
+    val delegationDataJson = Json.obj(
+      "attorneyName" -> "Bob Agent",
+      "principalName" -> "Dave Client",
+      "link" -> Json.obj(
+        "url" -> "http://taxplatform/some/dashboard",
+        "text" -> "Back to dashboard"
+      ),
+      "accounts" -> Json.obj(
+        "paye" -> Json.obj(
+          "link" -> "http://paye/some/path",
+          "nino" -> "AB123456D"
+        ),
+        "sa" -> Json.obj(
+          "link" -> "http://sa/some/utr",
+          "utr" -> "1234567890"
+        )
+      )
+    ).toString()
   }
 }
