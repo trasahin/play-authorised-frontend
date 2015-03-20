@@ -55,7 +55,7 @@ private[auth] trait AuthContextService {
 
     delegationConnector match {
       case Some(connector) if delegationState == DelegationOn =>
-        connector.get(OidExtractor.userIdToOid(userId)).map { delegationData: Option[DelegationData] =>
+        connector.getDelegationData(OidExtractor.userIdToOid(userId)).map { delegationData: Option[DelegationData] =>
           if (delegationData.isEmpty) Logger.warn(s"Delegation state is 'On', but no delegation data found for userId: $userId")
           delegationData
         }

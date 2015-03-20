@@ -178,7 +178,7 @@ class AuthContextServiceSpec extends UnitSpec with MockitoSugar {
       val oid = "somethingelse"
 
       when(mockAuthConnector.currentAuthority).thenReturn(Future.successful(Some(userAtKeyboard.authority)))
-      when(mockDelegationConnector.get(oid)).thenReturn(Future.successful(Some(delegationData)))
+      when(mockDelegationConnector.getDelegationData(oid)).thenReturn(Future.successful(Some(delegationData)))
 
       val sessionData = UserSessionData(
         userId = Some(s"/auth/oid/$oid"),
@@ -193,7 +193,7 @@ class AuthContextServiceSpec extends UnitSpec with MockitoSugar {
     "return None if there is no current Authority" in new TestCase(testSetup) {
 
       when(mockAuthConnector.currentAuthority).thenReturn(Future.successful(None))
-      when(mockDelegationConnector.get(session.oid)).thenReturn(Future.successful(Some(delegationData)))
+      when(mockDelegationConnector.getDelegationData(session.oid)).thenReturn(Future.successful(Some(delegationData)))
 
       val sessionData = UserSessionData(
         userId = Some(session.userId),
@@ -220,9 +220,9 @@ class AuthContextServiceSpec extends UnitSpec with MockitoSugar {
     )
 
     if (testSetup.returnDataFromDelegationService) {
-      when(mockDelegationConnector.get(session.oid)).thenReturn(Future.successful(Some(delegationData)))
+      when(mockDelegationConnector.getDelegationData(session.oid)).thenReturn(Future.successful(Some(delegationData)))
     } else {
-      when(mockDelegationConnector.get(session.oid)).thenReturn(Future.successful(None))
+      when(mockDelegationConnector.getDelegationData(session.oid)).thenReturn(Future.successful(None))
     }
 
     val service = new AuthContextService {

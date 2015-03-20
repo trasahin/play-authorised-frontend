@@ -1,16 +1,14 @@
 package uk.gov.hmrc.play.frontend.auth.connectors
 
 import play.api.libs.json.Json
-import play.api.mvc.Results
 import uk.gov.hmrc.play.audit.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.config.{AuditingConfig, LoadAuditingConfig}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.auth.frontend.connectors.domain.Authority
 import uk.gov.hmrc.play.config.{AppName, RunMode, ServicesConfig}
-import uk.gov.hmrc.play.frontend.auth.{Link, DelegationData}
-import uk.gov.hmrc.play.http.ws.WSHttp
+import uk.gov.hmrc.play.frontend.auth.{DelegationData, Link}
 import uk.gov.hmrc.play.http._
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
+import uk.gov.hmrc.play.http.ws.WSHttp
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
@@ -26,7 +24,7 @@ private[auth] trait DelegationConnector {
 
   private def delegationUrl(oid: String): String = s"$serviceUrl/oid/$oid"
 
-  def get(oid: String)(implicit hc: HeaderCarrier): Future[Option[DelegationData]] = {
+  def getDelegationData(oid: String)(implicit hc: HeaderCarrier): Future[Option[DelegationData]] = {
 
     implicit val responseHandler = new HttpReads[Option[DelegationData]] {
       override def read(method: String, url: String, response: HttpResponse): Option[DelegationData] = {
@@ -44,7 +42,7 @@ private[auth] trait DelegationConnector {
     http.GET[Option[DelegationData]](delegationUrl(oid))
   }
 
-  def put(oid: String, delegationData: DelegationData)(implicit hc: HeaderCarrier): Future[Unit] = {
+  def startDelegation(oid: String, delegationData: DelegationData)(implicit hc: HeaderCarrier): Future[Unit] = {
 
     http.PUT[DelegationData](delegationUrl(oid), delegationData, (response: Future[HttpResponse], _: String) => response).map { response =>
       response.status match {
@@ -54,7 +52,22 @@ private[auth] trait DelegationConnector {
     }
   }
 
-  def delete(oid: String): Future[Unit] = ???
+  def endDelegation(oid: String)(implicit hc: HeaderCarrier): Future[Unit] = {
+
+    case class DeletionResponse(override val status: Int, cause: Option[Throwable] = None) extends HttpResponse
+
+    val deletionResponse = http.DELETE(delegationUrl(oid)).map(r => DeletionResponse(r.status)).recover {
+      case e: HttpException => DeletionResponse(e.responseCode, Some(e))
+      case e: Upstream4xxResponse => DeletionResponse(e.upstreamResponseCode, Some(e))
+      case e: Upstream5xxResponse => DeletionResponse(e.upstreamResponseCode, Some(e))
+    }
+
+    deletionResponse.map {
+      case DeletionResponse(204 | 404, _) => ()
+      case DeletionResponse(unexpectedStatus, cause) =>
+        throw DelegationServiceException(s"Unexpected response code '$unexpectedStatus'", "DELETE", delegationUrl(oid), cause.orNull)
+    }
+  }
 }
 
 case class DelegationServiceException(message: String, method: String, url: String, cause: Throwable = null)

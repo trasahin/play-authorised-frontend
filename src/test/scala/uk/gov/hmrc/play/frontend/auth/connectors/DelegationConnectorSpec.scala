@@ -2,7 +2,7 @@ package uk.gov.hmrc.play.frontend.auth.connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import org.scalatest.mock.MockitoSugar
-import play.api.libs.json.{JsNull, Json}
+import play.api.libs.json.Json
 import uk.gov.hmrc.domain.{Nino, SaUtr}
 import uk.gov.hmrc.play.audit.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
@@ -16,20 +16,20 @@ class DelegationConnectorSpec extends UnitSpec with WithFakeApplication with Wir
 
   private implicit val hc = HeaderCarrier()
 
-  "The get(oid) method" should {
+  "The getDelegationData method" should {
 
     "return the delegation data returned from the service, if the response code is 200" in new TestCase {
 
       stubFor(get(urlEqualTo(s"/oid/$oid")).willReturn(aResponse().withStatus(200).withBody(delegationDataJson)))
 
-      await(connector.get(oid)) shouldBe Some(delegationDataObject)
+      await(connector.getDelegationData(oid)) shouldBe Some(delegationDataObject)
     }
 
     "return None when the response code is 404" in new TestCase {
 
       stubFor(get(urlEqualTo(s"/oid/$oid")).willReturn(aResponse().withStatus(404)))
 
-      await(connector.get(oid)) shouldBe None
+      await(connector.getDelegationData(oid)) shouldBe None
     }
 
     "throw an exception if the response code is anything other than 200 or 404" in new TestCase {
@@ -42,33 +42,33 @@ class DelegationConnectorSpec extends UnitSpec with WithFakeApplication with Wir
       stubFor(get(urlEqualTo(s"/oid/$oid400")).willReturn(aResponse().withStatus(400)))
       stubFor(get(urlEqualTo(s"/oid/$oid500")).willReturn(aResponse().withStatus(500)))
 
-      a [DelegationServiceException] should be thrownBy await(connector.get(oid204))
-      a [DelegationServiceException] should be thrownBy await(connector.get(oid400))
-      a [DelegationServiceException] should be thrownBy await(connector.get(oid500))
+      a [DelegationServiceException] should be thrownBy await(connector.getDelegationData(oid204))
+      a [DelegationServiceException] should be thrownBy await(connector.getDelegationData(oid400))
+      a [DelegationServiceException] should be thrownBy await(connector.getDelegationData(oid500))
     }
 
     "throw an exception if the response is not valid JSON" in new TestCase {
 
       stubFor(get(urlEqualTo(s"/oid/$oid")).willReturn(aResponse().withStatus(200).withBody("{ not _ json :")))
 
-      a [DelegationServiceException] should be thrownBy await(connector.get(oid))
+      a [DelegationServiceException] should be thrownBy await(connector.getDelegationData(oid))
     }
 
     "throw an exception if the response is valid JSON, but not representing Delegation Data" in new TestCase {
 
       stubFor(get(urlEqualTo(s"/oid/$oid")).willReturn(aResponse().withStatus(200).withBody("""{"valid":"json"}""")))
 
-      a [DelegationServiceException] should be thrownBy await(connector.get(oid))
+      a [DelegationServiceException] should be thrownBy await(connector.getDelegationData(oid))
     }
   }
 
-  "The PUT method" should {
+  "The startDelegation method" should {
 
     "send the delegation data to the DelegationService, and succeed if the response code is 201" in new TestCase {
 
       stubFor(put(urlEqualTo(s"/oid/$oid")).withRequestBody(equalToJson(delegationDataJson)).willReturn(aResponse().withStatus(201)))
 
-      await(connector.put(oid, delegationDataObject))
+      await(connector.startDelegation(oid, delegationDataObject))
 
       verify(putRequestedFor(urlEqualTo(s"/oid/$oid")).withRequestBody(equalToJson(delegationDataJson)))
     }
@@ -85,10 +85,49 @@ class DelegationConnectorSpec extends UnitSpec with WithFakeApplication with Wir
       stubFor(put(urlEqualTo(s"/oid/$oid400")).withRequestBody(equalToJson(delegationDataJson)).willReturn(aResponse().withStatus(400)))
       stubFor(put(urlEqualTo(s"/oid/$oid500")).withRequestBody(equalToJson(delegationDataJson)).willReturn(aResponse().withStatus(500)))
 
-      a [DelegationServiceException] should be thrownBy await(connector.put(oid200, delegationDataObject))
-      a [DelegationServiceException] should be thrownBy await(connector.put(oid204, delegationDataObject))
-      a [DelegationServiceException] should be thrownBy await(connector.put(oid400, delegationDataObject))
-      a [DelegationServiceException] should be thrownBy await(connector.put(oid500, delegationDataObject))
+      a [DelegationServiceException] should be thrownBy await(connector.startDelegation(oid200, delegationDataObject))
+      a [DelegationServiceException] should be thrownBy await(connector.startDelegation(oid204, delegationDataObject))
+      a [DelegationServiceException] should be thrownBy await(connector.startDelegation(oid400, delegationDataObject))
+      a [DelegationServiceException] should be thrownBy await(connector.startDelegation(oid500, delegationDataObject))
+    }
+  }
+
+  "The endDelegation method" should {
+
+    "request deletion from the Delegation Service and succeed if the result is 204" in new TestCase {
+
+      stubFor(delete(urlEqualTo(s"/oid/$oid")).willReturn(aResponse().withStatus(204)))
+
+      await(connector.endDelegation(oid))
+
+      verify(deleteRequestedFor(urlEqualTo(s"/oid/$oid")))
+    }
+
+    "request deletion from the Delegation Service and succeed if the result is 404" in new TestCase {
+
+      stubFor(delete(urlEqualTo(s"/oid/$oid")).willReturn(aResponse().withStatus(404)))
+
+      await(connector.endDelegation(oid))
+
+      verify(deleteRequestedFor(urlEqualTo(s"/oid/$oid")))
+    }
+
+    "request deletion from the Delegation Service and fail if the result anything other than 204 or 404" in new TestCase {
+
+      val oid200 = "200oid"
+      val oid201 = "201oid"
+      val oid400 = "400oid"
+      val oid500 = "500oid"
+
+      stubFor(delete(urlEqualTo(s"/oid/$oid200")).willReturn(aResponse().withStatus(200)))
+      stubFor(delete(urlEqualTo(s"/oid/$oid201")).willReturn(aResponse().withStatus(201)))
+      stubFor(delete(urlEqualTo(s"/oid/$oid400")).willReturn(aResponse().withStatus(400)))
+      stubFor(delete(urlEqualTo(s"/oid/$oid500")).willReturn(aResponse().withStatus(500)))
+
+      a [DelegationServiceException] should be thrownBy await(connector.endDelegation(oid200))
+      a [DelegationServiceException] should be thrownBy await(connector.endDelegation(oid201))
+      a [DelegationServiceException] should be thrownBy await(connector.endDelegation(oid400))
+      a [DelegationServiceException] should be thrownBy await(connector.endDelegation(oid500))
     }
   }
 
