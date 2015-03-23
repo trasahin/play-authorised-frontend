@@ -1,6 +1,5 @@
 package uk.gov.hmrc.play.frontend.auth
 
-import org.mockito.Mockito
 import org.scalatest.mock.MockitoSugar
 import play.api.mvc.{RequestHeader, Results}
 import play.api.test.FakeRequest
@@ -39,28 +38,28 @@ class DelegatorSpec extends UnitSpec with WithFakeApplication with Results {
 
       implicit val request: RequestHeader = FakeRequest()
 
-      val delegationData = DelegationData(
+      val delegationContext = DelegationContext(
         principalName = "Dave Client",
         attorneyName = "Bob Agent",
-        accounts = Accounts(
-          paye = Some(PayeAccount(link = "http://paye/some/path", nino = Nino("AB123456D"))),
-          sa = Some(SaAccount(link = "http://sa/some/utr", utr = SaUtr("1234567890")))
+        principalTaxIdentifiers = TaxIdentifiers(
+          paye = Some(Nino("AB123456D")),
+          sa = Some(SaUtr("1234567890"))
         ),
         link = Link(url = "http://taxplatform/some/dashboard", text = "Back to dashboard")
       )
 
       val redirectTo = "http://blah/blah"
 
-      when(mockDelegationConnector.startDelegation("1234", delegationData)).thenReturn(Future.successful(()))
+      when(mockDelegationConnector.startDelegation("1234", delegationContext)).thenReturn(Future.successful(()))
 
-      val result = await(delegator.startDelegation(delegationData, redirectTo))
+      val result = await(delegator.startDelegationAndRedirect(delegationContext, redirectTo))
 
       result.header.status shouldBe 303
       result.header.headers.get("Location") shouldBe Some("http://blah/blah")
 
       UserSessionData(result.session).delegationState shouldBe DelegationOn
 
-      verify(mockDelegationConnector).startDelegation("1234", delegationData)
+      verify(mockDelegationConnector).startDelegation("1234", delegationContext)
     }
   }
 

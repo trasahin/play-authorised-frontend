@@ -7,7 +7,7 @@ import uk.gov.hmrc.domain.{Nino, SaUtr}
 import uk.gov.hmrc.play.audit.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.auth.frontend.connectors.domain.{Accounts, PayeAccount, SaAccount}
-import uk.gov.hmrc.play.frontend.auth.{DelegationData, Link}
+import uk.gov.hmrc.play.frontend.auth._
 import uk.gov.hmrc.play.http.ws.WSHttp
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
@@ -16,6 +16,35 @@ class DelegationConnectorSpec extends UnitSpec with WithFakeApplication with Wir
   private implicit val hc = HeaderCarrier()
 
   "The getDelegationData method" should {
+
+    val delegationDataObject = DelegationData(
+      principalName = "Dave Client",
+      attorneyName = "Bob Agent",
+      accounts = Accounts(
+        paye = Some(PayeAccount(link = "http://paye/some/path", nino = Nino("AB123456D"))),
+        sa = Some(SaAccount(link = "http://sa/some/utr", utr = SaUtr("1234567890")))
+      ),
+      link = Link(url = "http://taxplatform/some/dashboard", text = "Back to dashboard")
+    )
+
+    val delegationDataJson = Json.obj(
+      "attorneyName" -> "Bob Agent",
+      "principalName" -> "Dave Client",
+      "link" -> Json.obj(
+        "url" -> "http://taxplatform/some/dashboard",
+        "text" -> "Back to dashboard"
+      ),
+      "accounts" -> Json.obj(
+        "paye" -> Json.obj(
+          "link" -> "http://paye/some/path",
+          "nino" -> "AB123456D"
+        ),
+        "sa" -> Json.obj(
+          "link" -> "http://sa/some/utr",
+          "utr" -> "1234567890"
+        )
+      )
+    ).toString()
 
     "return the delegation data returned from the service, if the response code is 200" in new TestCase {
 
@@ -63,13 +92,36 @@ class DelegationConnectorSpec extends UnitSpec with WithFakeApplication with Wir
 
   "The startDelegation method" should {
 
+    val delegationContextObject = DelegationContext(
+      principalName = "Dave Client",
+      attorneyName = "Bob Agent",
+      principalTaxIdentifiers = TaxIdentifiers(
+        paye = Some(Nino("AB123456D")),
+        sa = Some(SaUtr("1234567890"))
+      ),
+      link = Link(url = "http://taxplatform/some/dashboard", text = "Back to dashboard")
+    )
+
+    val delegationContextJson = Json.obj(
+      "attorneyName" -> "Bob Agent",
+      "principalName" -> "Dave Client",
+      "link" -> Json.obj(
+        "url" -> "http://taxplatform/some/dashboard",
+        "text" -> "Back to dashboard"
+      ),
+      "principalTaxIdentifiers" -> Json.obj(
+        "paye" -> "AB123456D",
+        "sa" -> "1234567890"
+      )
+    ).toString()
+
     "send the delegation data to the DelegationService, and succeed if the response code is 201" in new TestCase {
 
-      stubFor(put(urlEqualTo(s"/oid/$oid")).withRequestBody(equalToJson(delegationDataJson)).willReturn(aResponse().withStatus(201)))
+      stubFor(put(urlEqualTo(s"/oid/$oid")).withRequestBody(equalToJson(delegationContextJson)).willReturn(aResponse().withStatus(201)))
 
-      await(connector.startDelegation(oid, delegationDataObject))
+      await(connector.startDelegation(oid, delegationContextObject))
 
-      verify(putRequestedFor(urlEqualTo(s"/oid/$oid")).withRequestBody(equalToJson(delegationDataJson)))
+      verify(putRequestedFor(urlEqualTo(s"/oid/$oid")).withRequestBody(equalToJson(delegationContextJson)))
     }
 
     "send the delegation data to the DelegationService, and fail if the response code is anything other than 201" in new TestCase {
@@ -79,15 +131,15 @@ class DelegationConnectorSpec extends UnitSpec with WithFakeApplication with Wir
       val oid400 = "400oid"
       val oid500 = "500oid"
 
-      stubFor(put(urlEqualTo(s"/oid/$oid200")).withRequestBody(equalToJson(delegationDataJson)).willReturn(aResponse().withStatus(200)))
-      stubFor(put(urlEqualTo(s"/oid/$oid204")).withRequestBody(equalToJson(delegationDataJson)).willReturn(aResponse().withStatus(204)))
-      stubFor(put(urlEqualTo(s"/oid/$oid400")).withRequestBody(equalToJson(delegationDataJson)).willReturn(aResponse().withStatus(400)))
-      stubFor(put(urlEqualTo(s"/oid/$oid500")).withRequestBody(equalToJson(delegationDataJson)).willReturn(aResponse().withStatus(500)))
+      stubFor(put(urlEqualTo(s"/oid/$oid200")).withRequestBody(equalToJson(delegationContextJson)).willReturn(aResponse().withStatus(200)))
+      stubFor(put(urlEqualTo(s"/oid/$oid204")).withRequestBody(equalToJson(delegationContextJson)).willReturn(aResponse().withStatus(204)))
+      stubFor(put(urlEqualTo(s"/oid/$oid400")).withRequestBody(equalToJson(delegationContextJson)).willReturn(aResponse().withStatus(400)))
+      stubFor(put(urlEqualTo(s"/oid/$oid500")).withRequestBody(equalToJson(delegationContextJson)).willReturn(aResponse().withStatus(500)))
 
-      a [DelegationServiceException] should be thrownBy await(connector.startDelegation(oid200, delegationDataObject))
-      a [DelegationServiceException] should be thrownBy await(connector.startDelegation(oid204, delegationDataObject))
-      a [DelegationServiceException] should be thrownBy await(connector.startDelegation(oid400, delegationDataObject))
-      a [DelegationServiceException] should be thrownBy await(connector.startDelegation(oid500, delegationDataObject))
+      a [DelegationServiceException] should be thrownBy await(connector.startDelegation(oid200, delegationContextObject))
+      a [DelegationServiceException] should be thrownBy await(connector.startDelegation(oid204, delegationContextObject))
+      a [DelegationServiceException] should be thrownBy await(connector.startDelegation(oid400, delegationContextObject))
+      a [DelegationServiceException] should be thrownBy await(connector.startDelegation(oid500, delegationContextObject))
     }
   }
 
@@ -145,34 +197,5 @@ class DelegationConnectorSpec extends UnitSpec with WithFakeApplication with Wir
     }
 
     val oid = "1234"
-
-    val delegationDataObject = DelegationData(
-      principalName = "Dave Client",
-      attorneyName = "Bob Agent",
-      accounts = Accounts(
-        paye = Some(PayeAccount(link = "http://paye/some/path", nino = Nino("AB123456D"))),
-        sa = Some(SaAccount(link = "http://sa/some/utr", utr = SaUtr("1234567890")))
-      ),
-      link = Link(url = "http://taxplatform/some/dashboard", text = "Back to dashboard")
-    )
-
-    val delegationDataJson = Json.obj(
-      "attorneyName" -> "Bob Agent",
-      "principalName" -> "Dave Client",
-      "link" -> Json.obj(
-        "url" -> "http://taxplatform/some/dashboard",
-        "text" -> "Back to dashboard"
-      ),
-      "accounts" -> Json.obj(
-        "paye" -> Json.obj(
-          "link" -> "http://paye/some/path",
-          "nino" -> "AB123456D"
-        ),
-        "sa" -> Json.obj(
-          "link" -> "http://sa/some/utr",
-          "utr" -> "1234567890"
-        )
-      )
-    ).toString()
   }
 }
