@@ -13,9 +13,9 @@ class AuthContextSpec extends UnitSpec {
     val name = Some("Gary 'Government' Gateway")
     val governmentGatewayToken = Some("token")
   }
-  
+
   object AuthData {
-    
+
     val loggedInAt = Some(new DateTime(2015, 11, 22, 11, 33, 15, 234, DateTimeZone.UTC))
     val previouslyLoggedInAt = Some(new DateTime(2014, 8, 3, 9, 25, 44, 342, DateTimeZone.UTC))
 
@@ -32,7 +32,7 @@ class AuthContextSpec extends UnitSpec {
       previouslyLoggedInAt = previouslyLoggedInAt
     )
   }
-  
+
   object DelegationServiceData {
 
     val principalName = "Bill Principal"
@@ -49,14 +49,14 @@ class AuthContextSpec extends UnitSpec {
     previouslyLoggedInAt = AuthData.previouslyLoggedInAt,
     governmentGatewayToken = SessionData.governmentGatewayToken
   )
-  
+
   object ExpectationsWhenNotDelegating {
-    
+
     val principal = Principal(
       name = SessionData.name,
       accounts = AuthData.accounts
     )
-  
+
     val authenticationContext: AuthenticationContext = new AuthenticationContext(expectedLoggedInUser, principal, None)
 
     val user = User(
@@ -130,7 +130,7 @@ class AuthContextSpec extends UnitSpec {
 
       import ExpectationsWhenDelegating._
 
-      val authContext =  AuthContext(expectedLoggedInUser, principal, Some(attorney))
+      val authContext = AuthContext(expectedLoggedInUser, principal, Some(attorney))
 
       authContext shouldBe authenticationContext
       authContext shouldBe user
@@ -140,7 +140,7 @@ class AuthContextSpec extends UnitSpec {
 
       import ExpectationsWhenNotDelegating._
 
-      val authContext =  AuthContext(expectedLoggedInUser, principal, None)
+      val authContext = AuthContext(expectedLoggedInUser, principal, None)
 
       authContext shouldBe authenticationContext
       authContext shouldBe user
@@ -222,6 +222,61 @@ class AuthContextSpec extends UnitSpec {
         case AuthContext(q, w, e) => fail("Expected no match")
         case other => other shouldBe null
       }
+    }
+  }
+
+  "The display name of an AuthContext" should {
+
+    "be the principal name when not delegating" in {
+
+      val authContext = new AuthContext {
+        override def user: LoggedInUser = ???
+
+        override def attorney: Option[Attorney] = None
+
+        override def principal: Principal = Principal(name = Some("Alan Principal"), accounts = Accounts())
+      }
+
+      authContext.displayName shouldBe Some("Alan Principal")
+    }
+
+    "be None if not delegating and the principal name is None" in {
+
+      val authContext = new AuthContext {
+        override def user: LoggedInUser = ???
+
+        override def attorney: Option[Attorney] = None
+
+        override def principal: Principal = Principal(name = None, accounts = Accounts())
+      }
+
+      authContext.displayName shouldBe None
+    }
+
+    "be the attorneyName if delegating and the principal name is None" in {
+
+      val authContext = new AuthContext {
+        override def user: LoggedInUser = ???
+
+        override def attorney: Option[Attorney] = Some(Attorney(name = "Alice Accountant", returnLink = Link("aaa", "bbb")))
+
+        override def principal: Principal = Principal(name = None, accounts = Accounts())
+      }
+
+      authContext.displayName shouldBe Some("Alice Accountant")
+    }
+
+    "be 'attorneyName on behalf of principalName' if delegating and both are provided" in {
+
+      val authContext = new AuthContext {
+        override def user: LoggedInUser = ???
+
+        override def attorney: Option[Attorney] = Some(Attorney(name = "Alice Accountant", returnLink = Link("aaa", "bbb")))
+
+        override def principal: Principal = Principal(name = Some("Alan Principal"), accounts = Accounts())
+      }
+
+      authContext.displayName shouldBe Some("Alice Accountant on behalf of Alan Principal")
     }
   }
 }

@@ -10,7 +10,7 @@ class UserSpec extends UnitSpec with MockitoSugar with OidConversionSpec[User] {
 
   "a Government Gateway User" should {
 
-    "have their display name the same as name form GG" in {
+    "have their display name the same as name form GG when not delegating" in {
 
       val user = User("id", mock[Authority], Some("John Small"), None)
 
