@@ -12,17 +12,14 @@ import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future
 
-class AuthContextServiceSpec extends UnitSpec with MockitoSugar {
 
-  class TestSetup(val delegationSessionFlag: DelegationState, val provideDelegationConnector: Boolean, val returnDataFromDelegationService: Boolean = true)
+class AuthContextServiceWithDelegationEnabledSpec extends UnitSpec with MockitoSugar {
 
-  case object DelegationOffAndNoConnector extends TestSetup(DelegationOff, provideDelegationConnector = false)
-  case object DelegationOffButDataAvailable extends TestSetup(DelegationOff, provideDelegationConnector = true)
-  
-  case object DelegationOnButNoConnector extends TestSetup(DelegationOn, provideDelegationConnector = false)
-  case object DelegationOnButNoData extends TestSetup(DelegationOn, provideDelegationConnector = true, returnDataFromDelegationService = false)
+  class TestSetup(val delegationSessionFlag: DelegationState, val returnDataFromDelegationService: Boolean = true)
 
-  case object DelegationOnAndDataAvailable extends TestSetup(DelegationOn, provideDelegationConnector = true)
+  case object DelegationOffButDataAvailable extends TestSetup(DelegationOff)
+  case object DelegationOnButNoData extends TestSetup(DelegationOn, returnDataFromDelegationService = false)
+  case object DelegationOnAndDataAvailable extends TestSetup(DelegationOn)
 
   private implicit val hc: HeaderCarrier = HeaderCarrier()
 
@@ -43,19 +40,9 @@ class AuthContextServiceSpec extends UnitSpec with MockitoSugar {
     }
   }
 
-  "When the delegation session flag is 'Off', and no delegation connector is available, the currentAuthContext method" should {
-    behaveAsExpectedWithoutDelegation(DelegationOffAndNoConnector)
-    returnNoneIfTheAuthorityIsMissingOrInvalid(DelegationOffAndNoConnector)
-  }
-  
   "When the delegation session flag is 'Off', even if the delegation data is available, the currentAuthContext method" should {
     behaveAsExpectedWithoutDelegation(DelegationOffButDataAvailable)
     returnNoneIfTheAuthorityIsMissingOrInvalid(DelegationOffButDataAvailable)
-  }
-  
-  "When the delegation session flag is 'On', but no delegation connector is available, the currentAuthContext method" should {
-    behaveAsExpectedWithoutDelegation(DelegationOnButNoConnector)
-    returnNoneIfTheAuthorityIsMissingOrInvalid(DelegationOnButNoConnector)
   }
 
   "When the delegation session flag is 'On', but no delegation data is available, the currentAuthContext method" should {
@@ -171,7 +158,7 @@ class AuthContextServiceSpec extends UnitSpec with MockitoSugar {
     }
   }
 
-  def returnNoneIfTheAuthorityIsMissingOrInvalid(testSetup: TestSetup) = {
+  private def returnNoneIfTheAuthorityIsMissingOrInvalid(testSetup: TestSetup) = {
 
     "return None if the userId passed in does not match the uri of the Authority" in new TestCase(testSetup) {
 
@@ -207,9 +194,8 @@ class AuthContextServiceSpec extends UnitSpec with MockitoSugar {
 
   }
   
-  abstract class TestCase(testSetup: TestSetup) {
+  private abstract class TestCase(testSetup: TestSetup) extends AuthContextServiceTestCase {
 
-    val mockAuthConnector: AuthConnector = mock[AuthConnector]
     val mockDelegationConnector: DelegationConnector = mock[DelegationConnector]
 
     val delegationData = DelegationData(
@@ -225,35 +211,176 @@ class AuthContextServiceSpec extends UnitSpec with MockitoSugar {
       when(mockDelegationConnector.getDelegationData(session.oid)).thenReturn(Future.successful(None))
     }
 
-    val service = new AuthContextService {
+    val service = new AuthContextService with DelegationEnabled {
       override protected val authConnector = mockAuthConnector
-      override protected val delegationConnector = if (testSetup.provideDelegationConnector) Some(mockDelegationConnector) else None
+      override protected val delegationConnector = mockDelegationConnector
+    }
+  }
+}
+
+
+class AuthContextServiceDisallowingDelegationSpec extends UnitSpec with MockitoSugar {
+
+  private implicit val hc: HeaderCarrier = HeaderCarrier()
+
+  "When the userId in the session is missing, the currentAuthContext method" should {
+
+    "return None" in new TestCase {
+
+      val sessionData = UserSessionData(
+        userId = None,
+        governmentGatewayToken = Some(session.governmentGatewayToken),
+        name = Some(session.name),
+        delegationState = DelegationOff
+      )
+
+      await(service.currentAuthContext(sessionData)) shouldBe None
+
+      verifyZeroInteractions(mockAuthConnector)
+    }
+  }
+
+  "When the delegation session flag is 'Off', the currentAuthContext method" should {
+    behaveAsExpectedWithoutDelegation(DelegationOff)
+    returnNoneIfTheAuthorityIsMissingOrInvalid(DelegationOff)
+  }
+
+  "When the delegation session flag is 'On', the currentAuthContext method" should {
+    behaveAsExpectedWithoutDelegation(DelegationOn)
+    returnNoneIfTheAuthorityIsMissingOrInvalid(DelegationOn)
+  }
+
+  private def behaveAsExpectedWithoutDelegation(delegationState: DelegationState) = {
+
+    "combine the session data with the current authority to create the AuthContext" in new TestCase {
+
+      when(mockAuthConnector.currentAuthority).thenReturn(Future.successful(Some(userAtKeyboard.authority)))
+
+      val sessionData = UserSessionData(
+        userId = Some(session.userId),
+        governmentGatewayToken = Some(session.governmentGatewayToken),
+        name = Some(session.name),
+        delegationState = delegationState
+      )
+
+      val authContext = await(service.currentAuthContext(sessionData))
+
+      authContext shouldBe Some(AuthContext(
+        user = LoggedInUser(session.userId, userAtKeyboard.loggedInAt, userAtKeyboard.previouslyLoggedInAt, Some(session.governmentGatewayToken)),
+        principal = Principal(Some(session.name), userAtKeyboard.accounts),
+        attorney = None
+      ))
     }
 
-    object session {
-      val userId = "/auth/oid/1234567890"
-      val oid = "1234567890"
-      val governmentGatewayToken = "token"
-      val name = "Dave Agent"
+    "create the correct AuthContext if the governmentGatewayToken passed in is None" in new TestCase {
+
+      when(mockAuthConnector.currentAuthority).thenReturn(Future.successful(Some(userAtKeyboard.authority)))
+
+      val sessionData = UserSessionData(
+        userId = Some(session.userId),
+        governmentGatewayToken = None,
+        name = Some(session.name),
+        delegationState = delegationState
+      )
+
+      val authContext = await(service.currentAuthContext(sessionData))
+
+      authContext shouldBe Some(AuthContext(
+        user = LoggedInUser(session.userId, userAtKeyboard.loggedInAt, userAtKeyboard.previouslyLoggedInAt, None),
+        principal = Principal(Some(session.name), userAtKeyboard.accounts),
+        attorney = None
+      ))
     }
 
-    object userAtKeyboard {
-      
-      val loggedInAt = Some(new DateTime(2015, 11, 22, 11, 33, 15, 234, DateTimeZone.UTC))
-      
-      val previouslyLoggedInAt = Some(new DateTime(2014, 8, 3, 9, 25, 44, 342, DateTimeZone.UTC))
-      
-      val accounts = Accounts(
-        paye = Some(PayeAccount(link = "/paye/abc", nino = Nino("AB124512C"))),
-        sa = Some(SaAccount(link = "/sa/www", utr = SaUtr("1231231233")))
+    "create the correct AuthContext if the nameFromSession passed in is None" in new TestCase {
+
+      when(mockAuthConnector.currentAuthority).thenReturn(Future.successful(Some(userAtKeyboard.authority)))
+
+      val sessionData = UserSessionData(
+        userId = Some(session.userId),
+        governmentGatewayToken = Some(session.governmentGatewayToken),
+        name = None,
+        delegationState = DelegationOff
       )
-      
-      val authority = Authority(
-        uri = session.userId,
-        accounts = accounts,
-        loggedInAt = loggedInAt,
-        previouslyLoggedInAt = previouslyLoggedInAt
-      )
+
+      val authContext = await(service.currentAuthContext(sessionData))
+
+      authContext shouldBe Some(AuthContext(
+        user = LoggedInUser(session.userId, userAtKeyboard.loggedInAt, userAtKeyboard.previouslyLoggedInAt, Some(session.governmentGatewayToken)),
+        principal = Principal(None, userAtKeyboard.accounts),
+        attorney = None
+      ))
     }
+  }
+
+  private def returnNoneIfTheAuthorityIsMissingOrInvalid(delegationState: DelegationState) = {
+
+    "return None if the userId passed in does not match the uri of the Authority" in new TestCase {
+
+      val oid = "somethingelse"
+
+      when(mockAuthConnector.currentAuthority).thenReturn(Future.successful(Some(userAtKeyboard.authority)))
+
+      val sessionData = UserSessionData(
+        userId = Some(s"/auth/oid/$oid"),
+        governmentGatewayToken = Some(session.governmentGatewayToken),
+        name = None,
+        delegationState = delegationState
+      )
+
+      await(service.currentAuthContext(sessionData)) shouldBe None
+    }
+
+    "return None if there is no current Authority" in new TestCase {
+
+      when(mockAuthConnector.currentAuthority).thenReturn(Future.successful(None))
+
+      val sessionData = UserSessionData(
+        userId = Some(session.userId),
+        governmentGatewayToken = Some(session.governmentGatewayToken),
+        name = None,
+        delegationState = delegationState
+      )
+
+      await(service.currentAuthContext(sessionData)) shouldBe None
+    }
+  }
+
+  private abstract class TestCase extends AuthContextServiceTestCase {
+
+    val service = new AuthContextService with DelegationDisabled {
+      override protected val authConnector = mockAuthConnector
+    }
+  }
+}
+
+trait AuthContextServiceTestCase extends MockitoSugar {
+
+  val mockAuthConnector: AuthConnector = mock[AuthConnector]
+
+  object session {
+    val userId = "/auth/oid/1234567890"
+    val oid = "1234567890"
+    val governmentGatewayToken = "token"
+    val name = "Dave Agent"
+  }
+
+  object userAtKeyboard {
+
+    val loggedInAt = Some(new DateTime(2015, 11, 22, 11, 33, 15, 234, DateTimeZone.UTC))
+
+    val previouslyLoggedInAt = Some(new DateTime(2014, 8, 3, 9, 25, 44, 342, DateTimeZone.UTC))
+
+    val accounts = Accounts(
+      paye = Some(PayeAccount(link = "/paye/abc", nino = Nino("AB124512C"))),
+      sa = Some(SaAccount(link = "/sa/www", utr = SaUtr("1231231233")))
+    )
+
+    val authority = Authority(
+      uri = session.userId,
+      accounts = accounts,
+      loggedInAt = loggedInAt,
+      previouslyLoggedInAt = previouslyLoggedInAt
+    )
   }
 }

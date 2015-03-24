@@ -4,12 +4,17 @@ import play.api.mvc._
 
 import scala.concurrent.Future
 
-trait Actions
+trait Actions extends UserActions with DelegationDisabled
+trait ActionsWithDelegationAllowed extends UserActions with DelegationEnabled
+
+sealed trait UserActions
   extends SessionTimeoutWrapper
   with UserActionWrapper
   with AuthContextService
   with Authoriser
   with Results {
+
+  self: DelegationDataProvider =>
 
   private type PlayRequest = (Request[AnyContent] => Result)
   private type AsyncPlayRequest = (Request[AnyContent] => Future[Result])

@@ -11,8 +11,9 @@ import scala.concurrent.Future
 
 private[auth] trait AuthContextService {
 
+  self: DelegationDataProvider =>
+
   protected def authConnector: AuthConnector
-  protected def delegationConnector: Option[DelegationConnector] = None
 
   private[auth] def currentAuthContext(sessionData: UserSessionData)(implicit hc: HeaderCarrier): Future[Option[User]] = {
 
@@ -29,7 +30,11 @@ private[auth] trait AuthContextService {
                              (implicit hc: HeaderCarrier): Future[Option[User]] = {
 
     val authorityResponse = loadAuthority(userId)
-    val delegationDataResponse = loadDelegationData(userId, delegationState)
+
+    val delegationDataResponse = delegationState match {
+      case DelegationOn => loadDelegationData(userId)
+      case _ => Future.successful(None)
+    }
 
     authorityResponse.flatMap {
       case Some(authority) => delegationDataResponse.map { delegationData =>
@@ -49,16 +54,22 @@ private[auth] trait AuthContextService {
       case None => None
     }
   }
+}
 
-  private def loadDelegationData(userId: String, delegationState: DelegationState)(implicit hc: HeaderCarrier): Future[Option[DelegationData]] = {
+private[auth] sealed trait DelegationDataProvider {
+  protected def loadDelegationData(userId: String)(implicit hc: HeaderCarrier): Future[Option[DelegationData]]
+}
 
-    delegationConnector match {
-      case Some(connector) if delegationState == DelegationOn =>
-        connector.getDelegationData(OidExtractor.userIdToOid(userId)).map { delegationData: Option[DelegationData] =>
-          if (delegationData.isEmpty) Logger.warn(s"Delegation state is 'On', but no delegation data found for userId: $userId")
-          delegationData
-        }
-      case _ => Future.successful(None)
-    }
+private[auth] trait DelegationDisabled extends DelegationDataProvider {
+  protected override def loadDelegationData(userId: String)(implicit hc: HeaderCarrier): Future[Option[DelegationData]] =
+    Future.successful(None)
+}
+
+private[auth] trait DelegationEnabled extends DelegationDataProvider {
+
+  protected def delegationConnector: DelegationConnector
+
+  protected override def loadDelegationData(userId: String)(implicit hc: HeaderCarrier): Future[Option[DelegationData]] = {
+    delegationConnector.getDelegationData(OidExtractor.userIdToOid(userId))
   }
 }
