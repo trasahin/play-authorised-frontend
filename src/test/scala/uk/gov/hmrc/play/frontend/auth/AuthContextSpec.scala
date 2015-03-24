@@ -225,58 +225,28 @@ class AuthContextSpec extends UnitSpec {
     }
   }
 
-  "The display name of an AuthContext" should {
+  "The isDelegating flag" should {
 
-    "be the principal name when not delegating" in {
+    "be true if the attorney is defined" in {
 
-      val authContext = new AuthContext {
+      val context = new AuthContext {
         override def user: LoggedInUser = ???
+        override def attorney: Option[Attorney] = Some(Attorney("blah", Link("blah", "blah")))
+        override def principal: Principal = ???
+      }
 
+      context.isDelegating shouldBe true
+    }
+
+    "be false if the attorney is None" in {
+
+      val context = new AuthContext {
+        override def user: LoggedInUser = ???
         override def attorney: Option[Attorney] = None
-
-        override def principal: Principal = Principal(name = Some("Alan Principal"), accounts = Accounts())
+        override def principal: Principal = ???
       }
 
-      authContext.displayName shouldBe Some("Alan Principal")
-    }
-
-    "be None if not delegating and the principal name is None" in {
-
-      val authContext = new AuthContext {
-        override def user: LoggedInUser = ???
-
-        override def attorney: Option[Attorney] = None
-
-        override def principal: Principal = Principal(name = None, accounts = Accounts())
-      }
-
-      authContext.displayName shouldBe None
-    }
-
-    "be the attorneyName if delegating and the principal name is None" in {
-
-      val authContext = new AuthContext {
-        override def user: LoggedInUser = ???
-
-        override def attorney: Option[Attorney] = Some(Attorney(name = "Alice Accountant", returnLink = Link("aaa", "bbb")))
-
-        override def principal: Principal = Principal(name = None, accounts = Accounts())
-      }
-
-      authContext.displayName shouldBe Some("Alice Accountant")
-    }
-
-    "be 'attorneyName on behalf of principalName' if delegating and both are provided" in {
-
-      val authContext = new AuthContext {
-        override def user: LoggedInUser = ???
-
-        override def attorney: Option[Attorney] = Some(Attorney(name = "Alice Accountant", returnLink = Link("aaa", "bbb")))
-
-        override def principal: Principal = Principal(name = Some("Alan Principal"), accounts = Accounts())
-      }
-
-      authContext.displayName shouldBe Some("Alice Accountant on behalf of Alan Principal")
+      context.isDelegating shouldBe false
     }
   }
 }

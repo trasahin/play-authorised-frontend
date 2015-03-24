@@ -11,11 +11,7 @@ trait AuthContext {
 
   def attorney: Option[Attorney]
 
-  lazy val displayName: Option[String] = (attorney, principal.name) match {
-    case (Some(att), Some(principalName)) => Some(att.name + " on behalf of " + principalName)
-    case (Some(att), None) => Some(att.name)
-    case (_, optionalPrincipalName) => optionalPrincipalName
-  }
+  lazy val isDelegating: Boolean = attorney.isDefined
 }
 
 case class LoggedInUser(userId: String,loggedInAt: Option[DateTime], previouslyLoggedInAt: Option[DateTime], governmentGatewayToken: Option[String]) {
