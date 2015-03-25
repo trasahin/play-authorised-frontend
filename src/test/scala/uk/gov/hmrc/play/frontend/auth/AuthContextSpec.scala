@@ -57,7 +57,7 @@ class AuthContextSpec extends UnitSpec {
       accounts = AuthData.accounts
     )
 
-    val authenticationContext: AuthenticationContext = new AuthenticationContext(expectedLoggedInUser, principal, None)
+    val expectedAuthContext = AuthContext(expectedLoggedInUser, principal, None)
   }
 
   object ExpectationsWhenDelegating {
@@ -69,102 +69,37 @@ class AuthContextSpec extends UnitSpec {
 
     val attorney = Attorney(DelegationServiceData.attorneyName, DelegationServiceData.returnLink)
 
-    val authenticationContext = new AuthenticationContext(expectedLoggedInUser, principal, Some(attorney))
+    val expectedAuthContext = AuthContext(expectedLoggedInUser, principal, Some(attorney))
   }
 
   "The AuthContext apply method" should {
-
-    "Construct a valid AuthContext for the supplied user, principal and attorney when delegating" in {
-
-      import ExpectationsWhenDelegating._
-
-      val authContext = AuthContext(expectedLoggedInUser, principal, Some(attorney))
-
-      authContext shouldBe authenticationContext
-    }
-
-    "Construct a valid AuthContext for the supplied user and principal when not delegating" in {
-
-      import ExpectationsWhenNotDelegating._
-
-      val authContext = AuthContext(expectedLoggedInUser, principal, None)
-
-      authContext shouldBe authenticationContext
-    }
 
     "Construct a valid AuthContext for the supplied authority, session values and delegation data when delegating" in {
 
       val authContext = AuthContext(AuthData.authority, SessionData.governmentGatewayToken, SessionData.name, Some(DelegationServiceData.delegationData))
 
-      authContext shouldBe ExpectationsWhenDelegating.authenticationContext
+      authContext shouldBe ExpectationsWhenDelegating.expectedAuthContext
     }
 
-    "Construct a valid AuthContext (User) for the supplied authority and session values and when not delegating" in {
+    "Construct a valid AuthContext for the supplied authority and session values and when not delegating" in {
 
       val authContext = AuthContext(AuthData.authority, SessionData.governmentGatewayToken, SessionData.name, None)
 
-      authContext shouldBe ExpectationsWhenNotDelegating.authenticationContext
-    }
-  }
-
-  "The AuthContext unapply method" should {
-
-    "Extract the core AuthContext fields from an AuthenticationContext when delegating" in {
-
-      import ExpectationsWhenDelegating._
-
-      authenticationContext match {
-        case AuthContext(usr, prn, Some(att)) =>
-          usr shouldBe expectedLoggedInUser
-          prn shouldBe principal
-          att shouldBe attorney
-        case _ => fail("Expected a match")
-      }
-    }
-
-    "Extract the core AuthContext fields from an AuthenticationContext when not delegating" in {
-
-      import ExpectationsWhenNotDelegating._
-
-      authenticationContext match {
-        case AuthContext(usr, prn, att) =>
-          usr shouldBe expectedLoggedInUser
-          prn shouldBe principal
-          att shouldBe None
-        case _ => fail("Expected a match")
-      }
-    }
-
-    "cope with a null AuthContext" in {
-      null.asInstanceOf[AuthContext] match {
-        case AuthContext(q, w, e) => fail("Expected no match")
-        case other => other shouldBe null
-      }
+      authContext shouldBe ExpectationsWhenNotDelegating.expectedAuthContext
     }
   }
 
   "The isDelegating flag" should {
 
+    val loggedInUser = LoggedInUser("uid", None, None, None)
+    val principal = Principal(Some("Bob P"), Accounts())
+    
     "be true if the attorney is defined" in {
-
-      val context = new AuthContext {
-        override def user: LoggedInUser = ???
-        override def attorney: Option[Attorney] = Some(Attorney("blah", Link("blah", "blah")))
-        override def principal: Principal = ???
-      }
-
-      context.isDelegating shouldBe true
+      AuthContext(loggedInUser, principal, Some(Attorney("Dave A", Link("A", "A")))).isDelegating shouldBe true
     }
 
     "be false if the attorney is None" in {
-
-      val context = new AuthContext {
-        override def user: LoggedInUser = ???
-        override def attorney: Option[Attorney] = None
-        override def principal: Principal = ???
-      }
-
-      context.isDelegating shouldBe false
+      AuthContext(loggedInUser, principal, None).isDelegating shouldBe false
     }
   }
 }

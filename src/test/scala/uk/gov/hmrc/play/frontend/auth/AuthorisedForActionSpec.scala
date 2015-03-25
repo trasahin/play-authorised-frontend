@@ -85,19 +85,19 @@ sealed class TestController
   this: Authoriser =>
 
   def testAuthorisation = AuthorisedFor(TestTaxRegime) {
-    implicit user =>
+    implicit authContext =>
       implicit request =>
         Ok("jdensmore")
   }
 
   def testAuthorisationWithRedirectCommand = AuthenticatedBy(authenticationProvider = TestAuthenticationProvider, redirectToOrigin = true) {
-    implicit user =>
+    implicit authContext =>
       implicit request =>
         Ok("jdensmore")
   }
 
   def testThrowsException = AuthorisedFor(TestTaxRegime) {
-    implicit user =>
+    implicit authContext =>
       implicit request =>
         throw new RuntimeException("ACTION TEST")
   }

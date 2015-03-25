@@ -15,20 +15,20 @@ class DelegatorSpec extends UnitSpec with WithFakeApplication with Results {
 
   import org.mockito.Mockito._
 
-  implicit val authContext = new AuthContext {
-
-    override def attorney: Option[Attorney] = None
-
-    override def user: LoggedInUser = LoggedInUser("/auth/oid/1234", None, None, None)
-
-    override def principal: Principal = Principal(Some("Dave Agent"), accounts = Accounts(agent = Some(AgentAccount(
-      link = "http//agent/4567",
-      agentCode = AgentCode("4567"),
-      agentUserId = AgentUserId("ABC"),
-      agentUserRole = AgentAdmin,
-      payeReference = None
-    ))))
-  }
+  implicit val authContext = AuthContext(
+    user = LoggedInUser("/auth/oid/1234", None, None, None),
+    principal = Principal(
+      name = Some("Dave Agent"),
+      accounts = Accounts(agent = Some(AgentAccount(
+        link = "http//agent/4567",
+        agentCode = AgentCode("4567"),
+        agentUserId = AgentUserId("ABC"),
+        agentUserRole = AgentAdmin,
+        payeReference = None
+      )))
+    ),
+    attorney = None
+  )
 
   implicit val hc = new HeaderCarrier()
 

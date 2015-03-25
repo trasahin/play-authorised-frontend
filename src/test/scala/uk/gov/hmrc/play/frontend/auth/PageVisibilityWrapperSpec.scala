@@ -14,11 +14,11 @@ class PageVisibilityWrapperSpec extends UnitSpec with MockitoSugar {
     "authorise the action requested if the predicate is true" in  {
 
       val positivePredicate = new PageVisibilityPredicate {
-        def isVisible(user: AuthContext, request: Request[AnyContent]) = Future.successful(true)
+        def isVisible(authContext: AuthContext, request: Request[AnyContent]) = Future.successful(true)
       }
-      val userMock = mock[AuthContext]
+      val authContextMock = mock[AuthContext]
 
-      val result = DummyController.action(positivePredicate, userMock)
+      val result = DummyController.action(positivePredicate, authContextMock)
 
       status(result.apply(FakeRequest())) shouldBe 200
     }
@@ -26,12 +26,12 @@ class PageVisibilityWrapperSpec extends UnitSpec with MockitoSugar {
     "Non authorise the action requested if the predicate is false" in {
 
       val negativePredicate = new PageVisibilityPredicate {
-        def isVisible(user: AuthContext, request: Request[AnyContent]) = Future.successful(false)
+        def isVisible(authContext: AuthContext, request: Request[AnyContent]) = Future.successful(false)
       }
 
-      val userMock = mock[AuthContext]
+      val authContextMock = mock[AuthContext]
 
-      val result = DummyController.action(negativePredicate, userMock)
+      val result = DummyController.action(negativePredicate, authContextMock)
 
       status(result.apply(FakeRequest())) shouldBe 404
 
@@ -41,8 +41,8 @@ class PageVisibilityWrapperSpec extends UnitSpec with MockitoSugar {
 
   object DummyController extends Controller {
 
-    def action(predicate: PageVisibilityPredicate, user: AuthContext) = WithPageVisibility(predicate, user) {
-      user =>
+    def action(predicate: PageVisibilityPredicate, authContextMock: AuthContext) = WithPageVisibility(predicate, authContextMock) {
+      authContext =>
         Action(Ok)
     }
   }

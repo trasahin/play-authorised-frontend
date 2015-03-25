@@ -23,9 +23,9 @@ sealed trait UserActions
 
   type UserAction = AuthContext => Action[AnyContent]
 
-  implicit def makeAction(body: PlayUserRequest): UserAction = (user: AuthContext) => Action(body(user))
+  implicit def makeAction(body: PlayUserRequest): UserAction = (authContext: AuthContext) => Action(body(authContext))
 
-  implicit def makeFutureAction(body: AsyncPlayUserRequest): UserAction = (user: AuthContext) => Action.async(body(user))
+  implicit def makeFutureAction(body: AsyncPlayUserRequest): UserAction = (authAction: AuthContext) => Action.async(body(authAction))
 
   class AuthenticatedBy(authenticationProvider: AuthenticationProvider,
                         account: Option[TaxRegime],
@@ -54,9 +54,9 @@ sealed trait UserActions
                          body: UserAction) =
       WithSessionTimeoutValidation(authenticationProvider) {
         WithUserAuthorisedBy(authenticationProvider, account, redirectToOrigin) {
-          user =>
-            WithPageVisibility(pageVisibility, user) {
-              implicit user => body(user)
+          authContext =>
+            WithPageVisibility(pageVisibility, authContext) {
+              implicit authContext => body(authContext)
             }
         }
       }
