@@ -12,7 +12,7 @@ object HmrcBuild extends Build {
 
   val appName = "play-authorised-frontend"
 //  val appVersion = envOrElse("PLAY_AUTHORISED_FRONTEND_VERSION", "999-SNAPSHOT")
-  val appVersion = envOrElse("PLAY_AUTHORISED_FRONTEND_VERSION", "AOSS-SNAPSHOT")
+  val appVersion = envOrElse("PLAY_AUTHORISED_FRONTEND_VERSION", "AOSS-BREAKING-SNAPSHOT")
 
   lazy val microservice = Project(appName, file("."))
     .settings(version := appVersion)
