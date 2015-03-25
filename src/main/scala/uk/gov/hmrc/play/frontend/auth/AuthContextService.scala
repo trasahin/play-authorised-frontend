@@ -15,7 +15,7 @@ private[auth] trait AuthContextService {
 
   protected def authConnector: AuthConnector
 
-  private[auth] def currentAuthContext(sessionData: UserSessionData)(implicit hc: HeaderCarrier): Future[Option[User]] = {
+  private[auth] def currentAuthContext(sessionData: UserSessionData)(implicit hc: HeaderCarrier): Future[Option[AuthContext]] = {
 
     sessionData.userId match {
       case Some(userId) => loadAuthContext(userId, sessionData.governmentGatewayToken, sessionData.name, sessionData.delegationState)
@@ -27,7 +27,7 @@ private[auth] trait AuthContextService {
                               governmentGatewayToken: Option[String],
                               nameFromSession: Option[String],
                               delegationState: DelegationState)
-                             (implicit hc: HeaderCarrier): Future[Option[User]] = {
+                             (implicit hc: HeaderCarrier): Future[Option[AuthContext]] = {
 
     val authorityResponse = loadAuthority(userId)
 

@@ -58,15 +58,6 @@ class AuthContextSpec extends UnitSpec {
     )
 
     val authenticationContext: AuthenticationContext = new AuthenticationContext(expectedLoggedInUser, principal, None)
-
-    val user = User(
-      userId = SessionData.userId,
-      userAuthority = AuthData.authority,
-      nameFromGovernmentGateway = SessionData.name,
-      decryptedToken = SessionData.governmentGatewayToken,
-      actingAsAttorneyFor = None,
-      attorney = None
-    )
   }
 
   object ExpectationsWhenDelegating {
@@ -79,79 +70,33 @@ class AuthContextSpec extends UnitSpec {
     val attorney = Attorney(DelegationServiceData.attorneyName, DelegationServiceData.returnLink)
 
     val authenticationContext = new AuthenticationContext(expectedLoggedInUser, principal, Some(attorney))
-
-    val user = User(
-      userId = SessionData.userId,
-      userAuthority = AuthData.authority.copy(accounts = DelegationServiceData.principalAccounts),
-      nameFromGovernmentGateway = Some(DelegationServiceData.principalName),
-      decryptedToken = SessionData.governmentGatewayToken,
-      actingAsAttorneyFor = None,
-      attorney = Some(attorney)
-    )
-  }
-
-  "An AuthenticationContext" should {
-
-    "correctly implement User when not delegating" in {
-
-      val authenticationContext = new AuthenticationContext(
-        expectedLoggedInUser,
-        ExpectationsWhenNotDelegating.principal,
-        None
-      )
-
-      val expectedUser = ExpectationsWhenNotDelegating.user
-
-      authenticationContext shouldBe expectedUser
-      expectedUser shouldBe authenticationContext
-
-      authenticationContext.hashCode shouldBe expectedUser.hashCode
-    }
-
-    "correctly implement User when delegating" in {
-
-      val authenticationContext = new AuthenticationContext(
-        expectedLoggedInUser,
-        ExpectationsWhenDelegating.principal,
-        Some(ExpectationsWhenDelegating.attorney))
-
-      val expectedUser = ExpectationsWhenDelegating.user
-
-      authenticationContext shouldBe expectedUser
-      expectedUser shouldBe authenticationContext
-
-      authenticationContext.hashCode shouldBe expectedUser.hashCode
-    }
   }
 
   "The AuthContext apply method" should {
 
-    "Construct a valid AuthContext (User) for the supplied user, principal and attorney when delegating" in {
+    "Construct a valid AuthContext for the supplied user, principal and attorney when delegating" in {
 
       import ExpectationsWhenDelegating._
 
       val authContext = AuthContext(expectedLoggedInUser, principal, Some(attorney))
 
       authContext shouldBe authenticationContext
-      authContext shouldBe user
     }
 
-    "Construct a valid AuthContext (User) for the supplied user and principal when not delegating" in {
+    "Construct a valid AuthContext for the supplied user and principal when not delegating" in {
 
       import ExpectationsWhenNotDelegating._
 
       val authContext = AuthContext(expectedLoggedInUser, principal, None)
 
       authContext shouldBe authenticationContext
-      authContext shouldBe user
     }
 
-    "Construct a valid AuthContext (User) for the supplied authority, session values and delegation data when delegating" in {
+    "Construct a valid AuthContext for the supplied authority, session values and delegation data when delegating" in {
 
       val authContext = AuthContext(AuthData.authority, SessionData.governmentGatewayToken, SessionData.name, Some(DelegationServiceData.delegationData))
 
       authContext shouldBe ExpectationsWhenDelegating.authenticationContext
-      authContext shouldBe ExpectationsWhenDelegating.user
     }
 
     "Construct a valid AuthContext (User) for the supplied authority and session values and when not delegating" in {
@@ -159,7 +104,6 @@ class AuthContextSpec extends UnitSpec {
       val authContext = AuthContext(AuthData.authority, SessionData.governmentGatewayToken, SessionData.name, None)
 
       authContext shouldBe ExpectationsWhenNotDelegating.authenticationContext
-      authContext shouldBe ExpectationsWhenNotDelegating.user
     }
   }
 
@@ -178,37 +122,11 @@ class AuthContextSpec extends UnitSpec {
       }
     }
 
-    "Extract the core AuthContext fields from a User when delegating" in {
-
-      import ExpectationsWhenDelegating._
-
-      user match {
-        case AuthContext(usr, prn, Some(att)) =>
-          usr shouldBe expectedLoggedInUser
-          prn shouldBe principal
-          att shouldBe attorney
-        case _ => fail("Expected a match")
-      }
-    }
-
     "Extract the core AuthContext fields from an AuthenticationContext when not delegating" in {
 
       import ExpectationsWhenNotDelegating._
 
       authenticationContext match {
-        case AuthContext(usr, prn, att) =>
-          usr shouldBe expectedLoggedInUser
-          prn shouldBe principal
-          att shouldBe None
-        case _ => fail("Expected a match")
-      }
-    }
-
-    "Extract the core AuthContext fields from a User when not delegating" in {
-
-      import ExpectationsWhenNotDelegating._
-
-      user match {
         case AuthContext(usr, prn, att) =>
           usr shouldBe expectedLoggedInUser
           prn shouldBe principal

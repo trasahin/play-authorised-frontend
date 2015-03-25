@@ -24,23 +24,15 @@ case class Attorney(name: String, returnLink: Link)
 
 case class Link(url: String, text: String)
 
-private[auth] class AuthenticationContext(override val user: LoggedInUser, override val principal: Principal, override val attorney: Option[Attorney])
-  extends User(
-    userId = user.userId,
-    userAuthority = Authority(user.userId, principal.accounts, user.loggedInAt, user.previouslyLoggedInAt),
-    nameFromGovernmentGateway = principal.name,
-    decryptedToken = user.governmentGatewayToken,
-    actingAsAttorneyFor = None)
-  with AuthContext
-
+private[auth] case class AuthenticationContext(override val user: LoggedInUser, override val principal: Principal, override val attorney: Option[Attorney]) extends AuthContext
 
 object AuthContext {
 
-  def apply(user: LoggedInUser, principal: Principal, attorney: Option[Attorney]): User = {
+  def apply(user: LoggedInUser, principal: Principal, attorney: Option[Attorney]): AuthContext = {
     new AuthenticationContext(user, principal, attorney)
   }
 
-  def apply(authority: Authority, governmentGatewayToken: Option[String], nameFromSession: Option[String], delegationData: Option[DelegationData] = None): User = {
+  def apply(authority: Authority, governmentGatewayToken: Option[String], nameFromSession: Option[String], delegationData: Option[DelegationData] = None): AuthContext = {
 
     val (principalName: Option[String], accounts: Accounts, attorney: Option[Attorney]) = delegationData match {
       case Some(delegation) => (Some(delegation.principalName), delegation.accounts, Some(delegation.attorney))

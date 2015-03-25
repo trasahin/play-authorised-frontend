@@ -18,14 +18,14 @@ sealed trait UserActions
 
   private type PlayRequest = (Request[AnyContent] => Result)
   private type AsyncPlayRequest = (Request[AnyContent] => Future[Result])
-  private type PlayUserRequest = User => PlayRequest
-  private type AsyncPlayUserRequest = User => AsyncPlayRequest
+  private type PlayUserRequest = AuthContext => PlayRequest
+  private type AsyncPlayUserRequest = AuthContext => AsyncPlayRequest
 
-  type UserAction = User => Action[AnyContent]
+  type UserAction = AuthContext => Action[AnyContent]
 
-  implicit def makeAction(body: PlayUserRequest): UserAction = (user: User) => Action(body(user))
+  implicit def makeAction(body: PlayUserRequest): UserAction = (user: AuthContext) => Action(body(user))
 
-  implicit def makeFutureAction(body: AsyncPlayUserRequest): UserAction = (user: User) => Action.async(body(user))
+  implicit def makeFutureAction(body: AsyncPlayUserRequest): UserAction = (user: AuthContext) => Action.async(body(user))
 
   class AuthenticatedBy(authenticationProvider: AuthenticationProvider,
                         account: Option[TaxRegime],

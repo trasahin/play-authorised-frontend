@@ -8,7 +8,7 @@ import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import scala.concurrent._
 
 trait PageVisibilityPredicate {
-  def isVisible(user: User, request: Request[AnyContent]): Future[Boolean]
+  def isVisible(user: AuthContext, request: Request[AnyContent]): Future[Boolean]
 
   def nonVisibleResult: Result = NotFound
 }
@@ -16,7 +16,7 @@ trait PageVisibilityPredicate {
 private[auth] object WithPageVisibility {
 
 
-  def apply(predicate: PageVisibilityPredicate, user: User)(action: User => Action[AnyContent]): Action[AnyContent] =
+  def apply(predicate: PageVisibilityPredicate, user: AuthContext)(action: AuthContext => Action[AnyContent]): Action[AnyContent] =
 
     Action.async {
       request =>
@@ -31,5 +31,5 @@ private[auth] object WithPageVisibility {
 }
 
 object DefaultPageVisibilityPredicate extends PageVisibilityPredicate {
-  def isVisible(user: User, request: Request[AnyContent]) = Future.successful(true)
+  def isVisible(user: AuthContext, request: Request[AnyContent]) = Future.successful(true)
 }

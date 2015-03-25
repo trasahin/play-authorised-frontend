@@ -14,7 +14,7 @@ trait UserActionWrapper extends Results {
   private[auth] def WithUserAuthorisedBy(authenticationProvider: AuthenticationProvider,
                                             taxRegime: Option[TaxRegime],
                                             redirectToOrigin: Boolean)
-                                           (userAction: User => Action[AnyContent]): Action[AnyContent] =
+                                           (userAction: AuthContext => Action[AnyContent]): Action[AnyContent] =
     Action.async {
       implicit request =>
         implicit val hc = HeaderCarrier.fromSessionAndHeaders(request.session, request.headers)
@@ -32,7 +32,7 @@ trait UserActionWrapper extends Results {
 
   private def handleAuthenticated(taxRegime: Option[TaxRegime], authenticationProvider: AuthenticationProvider)
                                  (implicit request: Request[AnyContent]):
-  PartialFunction[UserCredentials, Future[Either[User, Result]]] = {
+  PartialFunction[UserCredentials, Future[Either[AuthContext, Result]]] = {
     case UserCredentials(Some(userId), tokenOption) =>
       implicit val hc = HeaderCarrier.fromSessionAndHeaders(request.session, request.headers)
 
