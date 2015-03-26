@@ -22,7 +22,7 @@ object HmrcBuild extends Build {
       shellPrompt := ShellPrompt(appVersion),
       libraryDependencies ++= AppDependencies(),
       Collaborators(),
-      crossScalaVersions := Seq("2.11.5")
+      crossScalaVersions := Seq("2.11.6")
     )
     .settings(publishAllArtefacts : _*)
     .settings(nexusPublishingSettings : _*)
@@ -41,7 +41,7 @@ private object AppDependencies {
     "com.typesafe.play" %% "play" % PlayVersion.current,
     json % "provided",
 
-    "uk.gov.hmrc" %% "play-authorisation" % "0.8.0"
+    "uk.gov.hmrc" %% "play-authorisation" % "0.9.0"
   )
 
   trait TestDependencies {
@@ -53,9 +53,9 @@ private object AppDependencies {
     def apply() = new TestDependencies {
       override lazy val test = Seq(
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
-        "org.scalatest" %% "scalatest" % "2.2.1" % scope,
+        "org.scalatest" %% "scalatest" % "2.2.2" % scope,
         "org.pegdown" % "pegdown" % "1.4.2" % scope,
-        "uk.gov.hmrc" %% "hmrctest" % "0.2.0" % scope
+        "uk.gov.hmrc" %% "hmrctest" % "1.0.0" % scope
       )
     }.test
   }
