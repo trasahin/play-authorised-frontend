@@ -9,7 +9,7 @@ case class AuthContext(user: LoggedInUser, principal: Principal, attorney: Optio
 
 object AuthContext {
 
-  def apply(authority: Authority, governmentGatewayToken: Option[String], nameFromSession: Option[String], delegationData: Option[DelegationData] = None): AuthContext = {
+  def apply(authority: Authority, governmentGatewayToken: Option[String] = None, nameFromSession: Option[String] = None, delegationData: Option[DelegationData] = None): AuthContext = {
 
     val (principalName: Option[String], accounts: Accounts, attorney: Option[Attorney]) = delegationData match {
       case Some(delegation) => (Some(delegation.principalName), delegation.accounts, Some(delegation.attorney))
