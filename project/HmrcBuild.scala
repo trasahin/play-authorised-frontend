@@ -42,7 +42,7 @@ private object AppDependencies {
     "com.typesafe.play" %% "play" % PlayVersion.current,
     json % "provided",
 
-    "uk.gov.hmrc" %% "play-authorisation" % "0.9.0"
+    "uk.gov.hmrc" %% "play-authorisation" % "0.10.0"
   )
 
   trait TestDependencies {
