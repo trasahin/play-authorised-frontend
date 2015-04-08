@@ -8,6 +8,7 @@ import uk.gov.hmrc.play.audit.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.auth.frontend.connectors.domain.{Accounts, PayeAccount, SaAccount}
 import uk.gov.hmrc.play.frontend.auth._
+import uk.gov.hmrc.play.http.{Upstream5xxResponse, BadRequestException}
 import uk.gov.hmrc.play.http.ws.WSHttp
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
@@ -138,8 +139,8 @@ class DelegationConnectorSpec extends UnitSpec with WithFakeApplication with Wir
 
       a [DelegationServiceException] should be thrownBy await(connector.startDelegation(oid200, delegationContextObject))
       a [DelegationServiceException] should be thrownBy await(connector.startDelegation(oid204, delegationContextObject))
-      a [DelegationServiceException] should be thrownBy await(connector.startDelegation(oid400, delegationContextObject))
-      a [DelegationServiceException] should be thrownBy await(connector.startDelegation(oid500, delegationContextObject))
+      a [BadRequestException] should be thrownBy await(connector.startDelegation(oid400, delegationContextObject))
+      a [Upstream5xxResponse] should be thrownBy await(connector.startDelegation(oid500, delegationContextObject))
     }
   }
 

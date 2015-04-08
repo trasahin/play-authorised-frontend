@@ -42,7 +42,7 @@ trait DelegationConnector {
 
   def startDelegation(oid: String, delegationContext: DelegationContext)(implicit hc: HeaderCarrier): Future[Unit] = {
 
-    http.PUT[DelegationContext](delegationUrl(oid), delegationContext, (response: Future[HttpResponse], _: String) => response).map { response =>
+    http.PUT[DelegationContext, HttpResponse](delegationUrl(oid), delegationContext).map { (response: HttpResponse) =>
       response.status match {
         case 201 => ()
         case unexpectedStatus => throw DelegationServiceException(s"Unexpected response code '$unexpectedStatus'", "PUT", delegationUrl(oid))
