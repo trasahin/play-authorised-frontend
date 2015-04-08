@@ -85,19 +85,19 @@ sealed class TestController
   this: Authoriser =>
 
   def testAuthorisation = AuthorisedFor(TestTaxRegime) {
-    implicit user =>
+    implicit authContext =>
       implicit request =>
         Ok("jdensmore")
   }
 
   def testAuthorisationWithRedirectCommand = AuthenticatedBy(authenticationProvider = TestAuthenticationProvider, redirectToOrigin = true) {
-    implicit user =>
+    implicit authContext =>
       implicit request =>
         Ok("jdensmore")
   }
 
   def testThrowsException = AuthorisedFor(TestTaxRegime) {
-    implicit user =>
+    implicit authContext =>
       implicit request =>
         throw new RuntimeException("ACTION TEST")
   }
@@ -111,7 +111,7 @@ object TestAuthenticationProvider extends AuthenticationProvider {
 
   def redirectToLogin(redirectToOrigin: Boolean)(implicit request: Request[AnyContent]) = Future.successful(Results.Redirect(login))
 
-  def handleNotAuthenticated(redirectToOrigin: Boolean)(implicit request: Request[AnyContent]): PartialFunction[UserCredentials, Future[Either[User, FailureResult]]] = {
+  def handleNotAuthenticated(redirectToOrigin: Boolean)(implicit request: Request[AnyContent]): PartialFunction[UserCredentials, Future[Either[AuthContext, FailureResult]]] = {
     case UserCredentials(None, None) =>
       redirectToLogin(redirectToOrigin).map(Right(_))
     case UserCredentials(Some(userId), None) =>

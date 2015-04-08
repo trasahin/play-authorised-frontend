@@ -11,10 +11,6 @@ import scala.concurrent._
 
 case class UserCredentials(userId: Option[String], token: Option[String])
 
-object UserCredentials {
-  def apply(session: Session): UserCredentials = UserCredentials(session.get(SessionKeys.userId), session.get(SessionKeys.token))
-}
-
 object AuthenticationProviderIds {
   val GovernmentGatewayId = "GGW"
   val AnyAuthenticationProviderId = "IDAorGGW"
@@ -29,9 +25,9 @@ trait AuthenticationProvider {
 
   def handleSessionTimeout(implicit request: Request[AnyContent]): Future[Result] = redirectToLogin(redirectToOrigin = false)
 
-  def handleNotAuthenticated(redirectToOrigin: Boolean)(implicit request: Request[AnyContent]): PartialFunction[UserCredentials, Future[Either[User, FailureResult]]]
+  def handleNotAuthenticated(redirectToOrigin: Boolean)(implicit request: Request[AnyContent]): PartialFunction[UserCredentials, Future[Either[AuthContext, FailureResult]]]
 
-  def handleAuthenticated(implicit request: Request[AnyContent]): PartialFunction[UserCredentials, Future[Either[User, Result]]] = PartialFunction.empty
+  def handleAuthenticated(implicit request: Request[AnyContent]): PartialFunction[UserCredentials, Future[Either[AuthContext, Result]]] = PartialFunction.empty
 
   implicit def hc(implicit request: Request[_]) = HeaderCarrier.fromSessionAndHeaders(request.session, request.headers)
 }
@@ -44,7 +40,7 @@ trait GovernmentGateway extends AuthenticationProvider {
 
   def redirectToLogin(redirectToOrigin: Boolean)(implicit request: Request[AnyContent]) = Future.successful(Redirect(login))
 
-  def handleNotAuthenticated(redirectToOrigin: Boolean)(implicit request: Request[AnyContent]): PartialFunction[UserCredentials, Future[Either[User, FailureResult]]] = {
+  def handleNotAuthenticated(redirectToOrigin: Boolean)(implicit request: Request[AnyContent]): PartialFunction[UserCredentials, Future[Either[AuthContext, FailureResult]]] = {
     case UserCredentials(None, token@_) =>
       Logger.info(s"No userId found - redirecting to login. user: None token : $token")
       redirectToLogin(redirectToOrigin).map(Right(_))

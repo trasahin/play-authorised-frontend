@@ -4,21 +4,28 @@ import play.api.mvc._
 
 import scala.concurrent.Future
 
-trait Actions
+trait Actions extends UserActions with DelegationDisabled
+trait ActionsWithDelegationAllowed extends UserActions with DelegationEnabled
+
+sealed trait UserActions
   extends SessionTimeoutWrapper
   with UserActionWrapper
-  with Authoriser {
+  with AuthContextService
+  with Authoriser
+  with Results {
+
+  self: DelegationDataProvider =>
 
   private type PlayRequest = (Request[AnyContent] => Result)
   private type AsyncPlayRequest = (Request[AnyContent] => Future[Result])
-  private type PlayUserRequest = User => PlayRequest
-  private type AsyncPlayUserRequest = User => AsyncPlayRequest
+  private type PlayUserRequest = AuthContext => PlayRequest
+  private type AsyncPlayUserRequest = AuthContext => AsyncPlayRequest
 
-  type UserAction = User => Action[AnyContent]
+  type UserAction = AuthContext => Action[AnyContent]
 
-  implicit def makeAction(body: PlayUserRequest): UserAction = (user: User) => Action(body(user))
+  implicit def makeAction(body: PlayUserRequest): UserAction = (authContext: AuthContext) => Action(body(authContext))
 
-  implicit def makeFutureAction(body: AsyncPlayUserRequest): UserAction = (user: User) => Action.async(body(user))
+  implicit def makeFutureAction(body: AsyncPlayUserRequest): UserAction = (authAction: AuthContext) => Action.async(body(authAction))
 
   class AuthenticatedBy(authenticationProvider: AuthenticationProvider,
                         account: Option[TaxRegime],
@@ -47,9 +54,9 @@ trait Actions
                          body: UserAction) =
       WithSessionTimeoutValidation(authenticationProvider) {
         WithUserAuthorisedBy(authenticationProvider, account, redirectToOrigin) {
-          user =>
-            WithPageVisibility(pageVisibility, user) {
-              implicit user => body(user)
+          authContext =>
+            WithPageVisibility(pageVisibility, authContext) {
+              implicit authContext => body(authContext)
             }
         }
       }

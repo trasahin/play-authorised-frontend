@@ -4,8 +4,10 @@ import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.Session
 
+@deprecated("Use AuthContext.principal and AuthContext.attorney", since = "March 2015")
 case class ActingAsAttorneyFor(name:Option[String], identifiers:Map[String, String])
 
+@deprecated("Use AuthContext.principal and AuthContext.attorney", since = "March 2015")
 object ActingAsAttorneyFor {
   val ACTING_AS_ATTORNEY_FOR: String = "acting-as-attorney-for"
 
