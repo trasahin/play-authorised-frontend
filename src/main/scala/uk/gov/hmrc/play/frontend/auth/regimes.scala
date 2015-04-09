@@ -1,6 +1,6 @@
 package uk.gov.hmrc.play.frontend.auth
 
-import uk.gov.hmrc.play.auth.frontend.connectors.domain.{Accounts, Authority}
+import uk.gov.hmrc.play.frontend.auth.connectors.domain.Accounts
 
 abstract class TaxRegime {
 

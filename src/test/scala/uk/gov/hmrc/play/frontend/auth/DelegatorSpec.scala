@@ -5,7 +5,7 @@ import play.api.mvc.{RequestHeader, Results}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.domain.{AgentCode, AgentUserId, Nino, SaUtr}
 import uk.gov.hmrc.play.audit.http.HeaderCarrier
-import uk.gov.hmrc.play.auth.frontend.connectors.domain._
+import uk.gov.hmrc.play.frontend.auth.connectors.domain._
 import uk.gov.hmrc.play.frontend.auth.connectors.DelegationConnector
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 

@@ -11,8 +11,7 @@ object HmrcBuild extends Build {
   import scala.util.Properties.envOrElse
 
   val appName = "play-authorised-frontend"
-//  val appVersion = envOrElse("PLAY_AUTHORISED_FRONTEND_VERSION", "999-SNAPSHOT")
-  val appVersion = envOrElse("PLAY_AUTHORISED_FRONTEND_VERSION", "AOSS-BREAKING-SNAPSHOT")
+  val appVersion = envOrElse("PLAY_AUTHORISED_FRONTEND_VERSION", "999-SNAPSHOT")
 
   lazy val microservice = Project(appName, file("."))
     .settings(version := appVersion)
@@ -37,12 +36,14 @@ private object AppDependencies {
   import play.PlayImport._
   import play.core.PlayVersion
 
+  val httpVerbsVersion = "1.4.1"
 
   val compile = Seq(
     "com.typesafe.play" %% "play" % PlayVersion.current,
     json % "provided",
-
-    "uk.gov.hmrc" %% "play-authorisation" % "0.10.0"
+    ws % "provided",
+    "uk.gov.hmrc" %% "http-verbs" % httpVerbsVersion,
+    "uk.gov.hmrc" %% "domain" % "2.6.0"
   )
 
   trait TestDependencies {
@@ -57,6 +58,7 @@ private object AppDependencies {
         "org.scalatest" %% "scalatest" % "2.2.2" % scope,
         "org.pegdown" % "pegdown" % "1.4.2" % scope,
         "com.github.tomakehurst" % "wiremock" % "1.54" % scope excludeAll ExclusionRule(organization = "org.apache.httpcomponents"),
+        "uk.gov.hmrc" %% "http-verbs" % httpVerbsVersion % scope classifier "tests",
         "uk.gov.hmrc" %% "hmrctest" % "1.0.0" % scope
       )
     }.test

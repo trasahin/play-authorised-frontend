@@ -1,7 +1,7 @@
 package uk.gov.hmrc.play.frontend.auth
 
 import org.joda.time.DateTime
-import uk.gov.hmrc.play.auth.frontend.connectors.domain.{Authority, Accounts}
+import uk.gov.hmrc.play.frontend.auth.connectors.domain.{Accounts, Authority}
 
 case class AuthContext(user: LoggedInUser, principal: Principal, attorney: Option[Attorney]) {
   lazy val isDelegating: Boolean = attorney.isDefined

@@ -6,7 +6,7 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.domain.{Nino, SaUtr}
 import uk.gov.hmrc.play.audit.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.auth.frontend.connectors.domain.{Accounts, PayeAccount, SaAccount}
+import uk.gov.hmrc.play.frontend.auth.connectors.domain.{Accounts, PayeAccount, SaAccount}
 import uk.gov.hmrc.play.frontend.auth._
 import uk.gov.hmrc.play.http.{Upstream5xxResponse, BadRequestException}
 import uk.gov.hmrc.play.http.ws.WSHttp

@@ -1,7 +1,7 @@
 package uk.gov.hmrc.play.frontend.auth
 
 import uk.gov.hmrc.domain.CtUtr
-import uk.gov.hmrc.play.auth.frontend.connectors.domain.{Accounts, CtAccount}
+import uk.gov.hmrc.play.frontend.auth.connectors.domain.{Accounts, CtAccount}
 import uk.gov.hmrc.play.test.UnitSpec
 
 class DelegationDataSpec extends UnitSpec {

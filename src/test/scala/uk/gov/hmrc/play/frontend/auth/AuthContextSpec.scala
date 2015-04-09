@@ -1,8 +1,8 @@
 package uk.gov.hmrc.play.frontend.auth
 
-import org.joda.time.{DateTimeZone, DateTime}
-import uk.gov.hmrc.domain.{Vrn, SaUtr, Nino}
-import uk.gov.hmrc.play.auth.frontend.connectors.domain._
+import org.joda.time.{DateTime, DateTimeZone}
+import uk.gov.hmrc.domain.{Nino, SaUtr, Vrn}
+import uk.gov.hmrc.play.frontend.auth.connectors.domain._
 import uk.gov.hmrc.play.test.UnitSpec
 
 class AuthContextSpec extends UnitSpec {

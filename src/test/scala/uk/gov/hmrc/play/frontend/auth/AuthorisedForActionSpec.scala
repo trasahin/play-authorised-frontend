@@ -11,8 +11,8 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.play.audit.http.HeaderCarrier
-import uk.gov.hmrc.play.auth.frontend.connectors.AuthConnector
-import uk.gov.hmrc.play.auth.frontend.connectors.domain.{Accounts, Authority, SaAccount}
+import uk.gov.hmrc.play.frontend.auth.connectors.domain.{Accounts, Authority}
+import uk.gov.hmrc.play.frontend.auth.connectors.{AuthConnector, domain}
 import uk.gov.hmrc.play.http.SessionKeys
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import uk.gov.hmrc.time.DateTimeUtils.now
@@ -75,7 +75,7 @@ class AuthorisedForActionSpec extends UnitSpec with BeforeAndAfterEachTestData w
   }
 
   def saAuthority(id: String, utr: String): Authority =
-    Authority(s"/auth/oid/$id",  Accounts(sa = Some(SaAccount(s"/sa/individual/$utr", SaUtr(utr)))), None, None)
+    Authority(s"/auth/oid/$id",  Accounts(sa = Some(domain.SaAccount(s"/sa/individual/$utr", SaUtr(utr)))), None, None)
 
 }
 

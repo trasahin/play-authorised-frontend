@@ -5,9 +5,7 @@ import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import uk.gov.hmrc.domain.{CtUtr, Nino, SaUtr}
 import uk.gov.hmrc.play.audit.http.HeaderCarrier
-import uk.gov.hmrc.play.auth.frontend.connectors.AuthConnector
-import uk.gov.hmrc.play.auth.frontend.connectors.domain._
-import uk.gov.hmrc.play.frontend.auth.connectors.DelegationConnector
+import uk.gov.hmrc.play.frontend.auth.connectors.{AuthConnector, DelegationConnector, domain}
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future
@@ -201,7 +199,7 @@ class AuthContextServiceWithDelegationEnabledSpec extends UnitSpec with MockitoS
     val delegationData = DelegationData(
       principalName = "Bill Principal",
       attorneyName = "Brian Agent",
-      accounts = Accounts(ct = Some(CtAccount("/some/path", CtUtr("1234554321")))),
+      accounts = domain.Accounts(ct = Some(domain.CtAccount("/some/path", CtUtr("1234554321")))),
       link = Link("/some/url", "Back to your dashboard")
     )
 
@@ -371,12 +369,12 @@ trait AuthContextServiceTestCase extends MockitoSugar {
 
     val previouslyLoggedInAt = Some(new DateTime(2014, 8, 3, 9, 25, 44, 342, DateTimeZone.UTC))
 
-    val accounts = Accounts(
-      paye = Some(PayeAccount(link = "/paye/abc", nino = Nino("AB124512C"))),
-      sa = Some(SaAccount(link = "/sa/www", utr = SaUtr("1231231233")))
+    val accounts = domain.Accounts(
+      paye = Some(domain.PayeAccount(link = "/paye/abc", nino = Nino("AB124512C"))),
+      sa = Some(domain.SaAccount(link = "/sa/www", utr = SaUtr("1231231233")))
     )
 
-    val authority = Authority(
+    val authority = domain.Authority(
       uri = session.userId,
       accounts = accounts,
       loggedInAt = loggedInAt,
