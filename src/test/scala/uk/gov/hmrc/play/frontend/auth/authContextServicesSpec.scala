@@ -5,6 +5,7 @@ import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import uk.gov.hmrc.domain.{CtUtr, Nino, SaUtr}
 import uk.gov.hmrc.play.audit.http.HeaderCarrier
+import uk.gov.hmrc.play.frontend.auth.connectors.domain.LevelOfAssurance.LOA_2
 import uk.gov.hmrc.play.frontend.auth.connectors.{AuthConnector, DelegationConnector, domain}
 import uk.gov.hmrc.play.test.UnitSpec
 
@@ -64,7 +65,7 @@ class AuthContextServiceWithDelegationEnabledSpec extends UnitSpec with MockitoS
       val authContext = await(service.currentAuthContext(sessionData))
 
       authContext shouldBe Some(AuthContext(
-        user = LoggedInUser(session.userId, userAtKeyboard.loggedInAt, userAtKeyboard.previouslyLoggedInAt, Some(session.governmentGatewayToken)),
+        user = LoggedInUser(session.userId, userAtKeyboard.loggedInAt, userAtKeyboard.previouslyLoggedInAt, Some(session.governmentGatewayToken), LOA_2),
         principal = Principal(Some(delegationData.principalName), delegationData.accounts),
         attorney = Some(Attorney(delegationData.attorneyName, delegationData.link))
       ))
@@ -84,7 +85,7 @@ class AuthContextServiceWithDelegationEnabledSpec extends UnitSpec with MockitoS
       val authContext = await(service.currentAuthContext(sessionData))
 
       authContext shouldBe Some(AuthContext(
-        user = LoggedInUser(session.userId, userAtKeyboard.loggedInAt, userAtKeyboard.previouslyLoggedInAt, None),
+        user = LoggedInUser(session.userId, userAtKeyboard.loggedInAt, userAtKeyboard.previouslyLoggedInAt, None, LOA_2),
         principal = Principal(Some(delegationData.principalName), delegationData.accounts),
         attorney = Some(Attorney(delegationData.attorneyName, delegationData.link))
       ))
@@ -109,7 +110,7 @@ class AuthContextServiceWithDelegationEnabledSpec extends UnitSpec with MockitoS
       val authContext = await(service.currentAuthContext(sessionData))
 
       authContext shouldBe Some(AuthContext(
-        user = LoggedInUser(session.userId, userAtKeyboard.loggedInAt, userAtKeyboard.previouslyLoggedInAt, Some(session.governmentGatewayToken)),
+        user = LoggedInUser(session.userId, userAtKeyboard.loggedInAt, userAtKeyboard.previouslyLoggedInAt, Some(session.governmentGatewayToken), LOA_2),
         principal = Principal(Some(session.name), userAtKeyboard.accounts),
         attorney = None
       ))
@@ -129,7 +130,7 @@ class AuthContextServiceWithDelegationEnabledSpec extends UnitSpec with MockitoS
       val authContext = await(service.currentAuthContext(sessionData))
 
       authContext shouldBe Some(AuthContext(
-        user = LoggedInUser(session.userId, userAtKeyboard.loggedInAt, userAtKeyboard.previouslyLoggedInAt, None),
+        user = LoggedInUser(session.userId, userAtKeyboard.loggedInAt, userAtKeyboard.previouslyLoggedInAt, None, LOA_2),
         principal = Principal(Some(session.name), userAtKeyboard.accounts),
         attorney = None
       ))
@@ -149,7 +150,7 @@ class AuthContextServiceWithDelegationEnabledSpec extends UnitSpec with MockitoS
       val authContext = await(service.currentAuthContext(sessionData))
 
       authContext shouldBe Some(AuthContext(
-        user = LoggedInUser(session.userId, userAtKeyboard.loggedInAt, userAtKeyboard.previouslyLoggedInAt, Some(session.governmentGatewayToken)),
+        user = LoggedInUser(session.userId, userAtKeyboard.loggedInAt, userAtKeyboard.previouslyLoggedInAt, Some(session.governmentGatewayToken), LOA_2),
         principal = Principal(None, userAtKeyboard.accounts),
         attorney = None
       ))
@@ -167,21 +168,6 @@ class AuthContextServiceWithDelegationEnabledSpec extends UnitSpec with MockitoS
 
       val sessionData = UserSessionData(
         userId = Some(s"/auth/oid/$oid"),
-        governmentGatewayToken = Some(session.governmentGatewayToken),
-        name = None,
-        delegationState = testSetup.delegationSessionFlag
-      )
-
-      await(service.currentAuthContext(sessionData)) shouldBe None
-    }
-
-    "return None if there is no current Authority" in new TestCase(testSetup) {
-
-      when(mockAuthConnector.currentAuthority).thenReturn(Future.successful(None))
-      when(mockDelegationConnector.getDelegationData(session.oid)).thenReturn(Future.successful(Some(delegationData)))
-
-      val sessionData = UserSessionData(
-        userId = Some(session.userId),
         governmentGatewayToken = Some(session.governmentGatewayToken),
         name = None,
         delegationState = testSetup.delegationSessionFlag
@@ -264,7 +250,7 @@ class AuthContextServiceDisallowingDelegationSpec extends UnitSpec with MockitoS
       val authContext = await(service.currentAuthContext(sessionData))
 
       authContext shouldBe Some(AuthContext(
-        user = LoggedInUser(session.userId, userAtKeyboard.loggedInAt, userAtKeyboard.previouslyLoggedInAt, Some(session.governmentGatewayToken)),
+        user = LoggedInUser(session.userId, userAtKeyboard.loggedInAt, userAtKeyboard.previouslyLoggedInAt, Some(session.governmentGatewayToken), LOA_2),
         principal = Principal(Some(session.name), userAtKeyboard.accounts),
         attorney = None
       ))
@@ -284,7 +270,7 @@ class AuthContextServiceDisallowingDelegationSpec extends UnitSpec with MockitoS
       val authContext = await(service.currentAuthContext(sessionData))
 
       authContext shouldBe Some(AuthContext(
-        user = LoggedInUser(session.userId, userAtKeyboard.loggedInAt, userAtKeyboard.previouslyLoggedInAt, None),
+        user = LoggedInUser(session.userId, userAtKeyboard.loggedInAt, userAtKeyboard.previouslyLoggedInAt, None, LOA_2),
         principal = Principal(Some(session.name), userAtKeyboard.accounts),
         attorney = None
       ))
@@ -304,7 +290,7 @@ class AuthContextServiceDisallowingDelegationSpec extends UnitSpec with MockitoS
       val authContext = await(service.currentAuthContext(sessionData))
 
       authContext shouldBe Some(AuthContext(
-        user = LoggedInUser(session.userId, userAtKeyboard.loggedInAt, userAtKeyboard.previouslyLoggedInAt, Some(session.governmentGatewayToken)),
+        user = LoggedInUser(session.userId, userAtKeyboard.loggedInAt, userAtKeyboard.previouslyLoggedInAt, Some(session.governmentGatewayToken), LOA_2),
         principal = Principal(None, userAtKeyboard.accounts),
         attorney = None
       ))
@@ -321,20 +307,6 @@ class AuthContextServiceDisallowingDelegationSpec extends UnitSpec with MockitoS
 
       val sessionData = UserSessionData(
         userId = Some(s"/auth/oid/$oid"),
-        governmentGatewayToken = Some(session.governmentGatewayToken),
-        name = None,
-        delegationState = delegationState
-      )
-
-      await(service.currentAuthContext(sessionData)) shouldBe None
-    }
-
-    "return None if there is no current Authority" in new TestCase {
-
-      when(mockAuthConnector.currentAuthority).thenReturn(Future.successful(None))
-
-      val sessionData = UserSessionData(
-        userId = Some(session.userId),
         governmentGatewayToken = Some(session.governmentGatewayToken),
         name = None,
         delegationState = delegationState
@@ -378,7 +350,8 @@ trait AuthContextServiceTestCase extends MockitoSugar {
       uri = session.userId,
       accounts = accounts,
       loggedInAt = loggedInAt,
-      previouslyLoggedInAt = previouslyLoggedInAt
+      previouslyLoggedInAt = previouslyLoggedInAt,
+      levelOfAssurance = LOA_2
     )
   }
 }

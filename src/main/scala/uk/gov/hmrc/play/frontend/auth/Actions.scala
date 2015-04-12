@@ -1,6 +1,7 @@
 package uk.gov.hmrc.play.frontend.auth
 
 import play.api.mvc._
+import uk.gov.hmrc.play.frontend.auth.connectors.domain.LevelOfAssurance.LOA_2
 
 import scala.concurrent.Future
 
@@ -28,32 +29,32 @@ sealed trait UserActions
   implicit def makeFutureAction(body: AsyncPlayUserRequest): UserAction = (authAction: AuthContext) => Action.async(body(authAction))
 
   class AuthenticatedBy(authenticationProvider: AuthenticationProvider,
-                        account: Option[TaxRegime],
+                        taxRegime: Option[TaxRegime],
                         redirectToOrigin: Boolean,
                         pageVisibility: PageVisibilityPredicate) extends AuthenticatedAction {
-    def apply(body: PlayUserRequest): Action[AnyContent] = authorised(authenticationProvider, account, redirectToOrigin, pageVisibility, body)
+    def apply(body: PlayUserRequest): Action[AnyContent] = authorised(authenticationProvider, taxRegime, redirectToOrigin, pageVisibility, body)
 
-    def async(body: AsyncPlayUserRequest): Action[AnyContent] = authorised(authenticationProvider, account, redirectToOrigin, pageVisibility, body)
+    def async(body: AsyncPlayUserRequest): Action[AnyContent] = authorised(authenticationProvider, taxRegime, redirectToOrigin, pageVisibility, body)
   }
 
 
-  def AuthorisedFor(regime: TaxRegime,
+  def AuthorisedFor(taxRegime: TaxRegime,
                     redirectToOrigin: Boolean = false,
-                    pageVisibility: PageVisibilityPredicate = DefaultPageVisibilityPredicate)
-  = new AuthenticatedBy(regime.authenticationType, Some(regime), redirectToOrigin, pageVisibility)
+                    pageVisibility: PageVisibilityPredicate = LoaPredicate(LOA_2))
+  = new AuthenticatedBy(taxRegime.authenticationType, Some(taxRegime), redirectToOrigin, pageVisibility)
 
   def AuthenticatedBy(authenticationProvider: AuthenticationProvider,
                       redirectToOrigin: Boolean = false,
-                      pageVisibility: PageVisibilityPredicate = DefaultPageVisibilityPredicate)
+                      pageVisibility: PageVisibilityPredicate = LoaPredicate(LOA_2))
   = new AuthenticatedBy(authenticationProvider, None, redirectToOrigin, pageVisibility)
 
   private def authorised(authenticationProvider: AuthenticationProvider,
-                         account: Option[TaxRegime],
+                         taxRegime: Option[TaxRegime],
                          redirectToOrigin: Boolean,
                          pageVisibility: PageVisibilityPredicate,
                          body: UserAction) =
       WithSessionTimeoutValidation(authenticationProvider) {
-        WithUserAuthorisedBy(authenticationProvider, account, redirectToOrigin) {
+        WithUserAuthenticatedBy(authenticationProvider, taxRegime, redirectToOrigin) {
           authContext =>
             WithPageVisibility(pageVisibility, authContext) {
               implicit authContext => body(authContext)
