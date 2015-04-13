@@ -1,7 +1,7 @@
 package uk.gov.hmrc.play.frontend.auth
 
 import play.api.Logger
-import play.api.mvc.{Result, _}
+import play.api.mvc._
 import uk.gov.hmrc.play.audit.http.HeaderCarrier
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
@@ -11,7 +11,7 @@ trait UserActionWrapper extends Results {
 
   self: AuthContextService =>
 
-  private[auth] def WithUserAuthorisedBy(authenticationProvider: AuthenticationProvider,
+  private[auth] def WithUserAuthenticatedBy(authenticationProvider: AuthenticationProvider,
                                             taxRegime: Option[TaxRegime],
                                             redirectToOrigin: Boolean)
                                            (userAction: AuthContext => Action[AnyContent]): Action[AnyContent] =

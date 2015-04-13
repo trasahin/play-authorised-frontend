@@ -1,6 +1,7 @@
 package uk.gov.hmrc.play.frontend.auth
 
 import org.joda.time.DateTime
+import uk.gov.hmrc.play.frontend.auth.connectors.domain.LevelOfAssurance.LevelOfAssurance
 import uk.gov.hmrc.play.frontend.auth.connectors.domain.{Accounts, Authority}
 
 case class AuthContext(user: LoggedInUser, principal: Principal, attorney: Option[Attorney]) {
@@ -9,7 +10,9 @@ case class AuthContext(user: LoggedInUser, principal: Principal, attorney: Optio
 
 object AuthContext {
 
-  def apply(authority: Authority, governmentGatewayToken: Option[String] = None, nameFromSession: Option[String] = None, delegationData: Option[DelegationData] = None): AuthContext = {
+  def apply(authority: Authority, governmentGatewayToken: Option[String] = None,
+            nameFromSession: Option[String] = None,
+            delegationData: Option[DelegationData] = None): AuthContext = {
 
     val (principalName: Option[String], accounts: Accounts, attorney: Option[Attorney]) = delegationData match {
       case Some(delegation) => (Some(delegation.principalName), delegation.accounts, Some(delegation.attorney))
@@ -21,7 +24,8 @@ object AuthContext {
         userId = authority.uri,
         loggedInAt = authority.loggedInAt,
         previouslyLoggedInAt = authority.previouslyLoggedInAt,
-        governmentGatewayToken = governmentGatewayToken
+        governmentGatewayToken = governmentGatewayToken,
+        levelOfAssurance = authority.levelOfAssurance
       ),
       principal = Principal(
         name = principalName,
@@ -32,7 +36,10 @@ object AuthContext {
   }
 }
 
-case class LoggedInUser(userId: String,loggedInAt: Option[DateTime], previouslyLoggedInAt: Option[DateTime], governmentGatewayToken: Option[String]) {
+case class LoggedInUser(userId: String,loggedInAt: Option[DateTime],
+                        previouslyLoggedInAt: Option[DateTime],
+                        governmentGatewayToken: Option[String],
+                        levelOfAssurance: LevelOfAssurance) {
   lazy val oid: String = OidExtractor.userIdToOid(userId)
 }
 
