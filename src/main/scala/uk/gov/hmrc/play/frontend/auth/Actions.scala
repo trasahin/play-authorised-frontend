@@ -6,7 +6,7 @@ import uk.gov.hmrc.play.frontend.auth.connectors.domain.LevelOfAssurance.LOA_2
 import scala.concurrent.Future
 
 trait Actions extends UserActions with DelegationDisabled
-trait ActionsWithDelegationAllowed extends UserActions with DelegationEnabled
+trait DelegationAwareActions extends UserActions with DelegationEnabled
 
 sealed trait UserActions
   extends SessionTimeoutWrapper
