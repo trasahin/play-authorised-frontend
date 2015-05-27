@@ -25,7 +25,8 @@ class DelegationConnectorSpec extends UnitSpec with WithFakeApplication with Wir
         paye = Some(PayeAccount(link = "http://paye/some/path", nino = Nino("AB123456D"))),
         sa = Some(SaAccount(link = "http://sa/some/utr", utr = SaUtr("1234567890")))
       ),
-      link = Link(url = "http://taxplatform/some/dashboard", text = "Back to dashboard")
+      link = Link(url = "http://taxplatform/some/dashboard", text = "Back to dashboard"),
+      supplementaryData = Map("agentName" -> "Shipley")
     )
 
     val delegationDataJson = Json.obj(
@@ -44,7 +45,8 @@ class DelegationConnectorSpec extends UnitSpec with WithFakeApplication with Wir
           "link" -> "http://sa/some/utr",
           "utr" -> "1234567890"
         )
-      )
+      ),
+      "supplementaryData" -> Json.obj("agentName" -> "Shipley")
     ).toString()
 
     "return the delegation data returned from the service, if the response code is 200" in new TestCase {
@@ -113,7 +115,8 @@ class DelegationConnectorSpec extends UnitSpec with WithFakeApplication with Wir
       "principalTaxIdentifiers" -> Json.obj(
         "paye" -> "AB123456D",
         "sa" -> "1234567890"
-      )
+      ),
+      "supplementaryData" -> Json.obj()
     ).toString()
 
     "send the delegation data to the DelegationService, and succeed if the response code is 201" in new TestCase {
