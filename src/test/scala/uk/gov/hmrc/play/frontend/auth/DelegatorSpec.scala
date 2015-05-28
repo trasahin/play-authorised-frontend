@@ -46,8 +46,7 @@ class DelegatorSpec extends UnitSpec with WithFakeApplication with Results {
           paye = Some(Nino("AB123456D")),
           sa = Some(SaUtr("1234567890"))
         ),
-        link = Link(url = "http://taxplatform/some/dashboard", text = "Back to dashboard"),
-        supplementaryData = Map("some" -> "data")
+        link = Link(url = "http://taxplatform/some/dashboard", text = "Back to dashboard")
       )
 
       val redirectTo = "http://blah/blah"

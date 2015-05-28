@@ -45,7 +45,7 @@ case class LoggedInUser(userId: String,loggedInAt: Option[DateTime],
 
 case class Principal(name: Option[String], accounts: Accounts)
 
-case class Attorney(name: String, returnLink: Link, supplementaryData: Map[String, String] = Map.empty)
+case class Attorney(name: String, returnLink: Link)
 
 case class Link(url: String, text: String)
 

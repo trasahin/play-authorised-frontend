@@ -2,8 +2,8 @@ package uk.gov.hmrc.play.frontend.auth
 
 import uk.gov.hmrc.play.frontend.auth.connectors.domain.Accounts
 
-private[auth] case class DelegationData(principalName: String, attorneyName: String, accounts: Accounts, link: Link, supplementaryData: Map[String, String] = Map.empty) {
-  val attorney = Attorney(attorneyName, link, supplementaryData)
+private[auth] case class DelegationData(principalName: String, attorneyName: String, accounts: Accounts, link: Link) {
+  val attorney = Attorney(attorneyName, link)
 }
 
 private[auth] sealed trait DelegationState

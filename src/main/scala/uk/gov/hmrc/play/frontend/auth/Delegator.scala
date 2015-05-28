@@ -27,11 +27,7 @@ trait Delegator {
   }
 }
 
-case class DelegationContext(principalName: String,
-                             attorneyName: String,
-                             link: Link,
-                             principalTaxIdentifiers: TaxIdentifiers,
-                             supplementaryData: Map[String, String] = Map.empty)
+case class DelegationContext(principalName: String, attorneyName: String, link: Link, principalTaxIdentifiers: TaxIdentifiers)
 
 case class TaxIdentifiers(paye: Option[Nino] = None,
                           sa: Option[SaUtr] = None,
