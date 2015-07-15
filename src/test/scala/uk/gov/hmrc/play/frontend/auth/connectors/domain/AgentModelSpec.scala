@@ -73,12 +73,12 @@ class AgentModelSpec extends UnitSpec {
       val agentAccount =
         s"""
         |	{
-        |   "link": "/agent/ABCDEF123456",
-        |   "agentCode": "ABCDEF123456",
-        |   "agentUserId": "ZMOQ1hrrP-9ZmnFw0kIA5vlc-mo",
-        |   "agentUserRole": "$role",
-        |   "payeReference": "HZ1234",
-        |   "agentBusinessUtr": "JARN1234567"
+        | 	"link": "/agent/ABCDEF123456",
+        |		"agentCode": "ABCDEF123456",
+        |		"agentUserId": "ZMOQ1hrrP-9ZmnFw0kIA5vlc-mo",
+        |		"agentUserRole": "$role",
+        |		"payeReference": "HZ1234",
+        |		"agentBusinessUtr": "JARN1234567"
         |	}
       """.stripMargin
       Json.parse(agentAccount)
