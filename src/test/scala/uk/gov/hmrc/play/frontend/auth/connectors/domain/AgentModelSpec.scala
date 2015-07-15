@@ -77,7 +77,8 @@ class AgentModelSpec extends UnitSpec {
         |		"agentCode": "ABCDEF123456",
         |		"agentUserId": "ZMOQ1hrrP-9ZmnFw0kIA5vlc-mo",
         |		"agentUserRole": "$role",
-        |		"payeReference": "HZ1234"
+        |		"payeReference": "HZ1234",
+        |   "agentBusinessUtr": "JARN1234567"
         |	}
       """.stripMargin
       Json.parse(agentAccount)

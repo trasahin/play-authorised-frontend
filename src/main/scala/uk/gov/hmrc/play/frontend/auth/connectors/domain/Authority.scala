@@ -98,7 +98,10 @@ object AgentAssistant extends AgentRole {
 }
 
 
-case class AgentAccount(link: String, agentCode: AgentCode, agentUserId: AgentUserId, agentUserRole: AgentRole, payeReference: Option[PayeAgentReference]) extends Account
+case class AgentAccount(link: String, agentCode: AgentCode, agentUserId: AgentUserId,
+                        agentUserRole: AgentRole,
+                        payeReference: Option[PayeAgentReference],
+                        agentBusinessUtr: Option[AgentBusinessUtr]) extends Account
 
 object AgentAccount {
   implicit val format = Json.format[AgentAccount]
@@ -115,7 +118,8 @@ case class Accounts(paye: Option[PayeAccount] = None,
                     taxsAgent: Option[TaxSummariesAgentAccount] = None,
                     tcs: Option[TaxCreditServiceAccount] = None,
                     ei: Option[EIAccount] = None,
-                    org: Option[OrgAccount] = None ) {
+                    org: Option[OrgAccount] = None,
+                    ated: Option[AtedAccount] = None) {
   def toMap = Map() ++
     sa.map("saUtr" -> _.utr.utr).toMap ++
     vat.map("vrn" -> _.vrn.vrn).toMap ++
@@ -125,6 +129,7 @@ case class Accounts(paye: Option[PayeAccount] = None,
     org.map("org" -> _.org.org).toMap ++
     ei.map("empRef" -> _.empRef.toString).toMap ++
     agent.map("agentCode" -> _.agentCode).toMap ++
+    ated.map("atedUtr" -> _.utr.utr).toMap ++
     taxsAgent.map("uar" -> _.uar.uar).toMap
 }
 
@@ -142,6 +147,7 @@ object Accounts {
     implicit val orgFormat = Json.format[OrgAccount]
     implicit val agentFormat = Json.format[AgentAccount]
     implicit val eiFormat = Json.format[EIAccount]
+    implicit val atedFormat = Json.format[AtedAccount]
     Json.format[Accounts]
   }
 }
@@ -165,6 +171,8 @@ case class TaxSummariesAgentAccount(link: String, uar: Uar) extends Account
 case class OrgAccount(link: String, org: Org) extends Account
 
 case class EIAccount(link: String, empRef: EmpRef) extends Account
+
+case class AtedAccount(link: String, utr: AtedUtr) extends Account
 
 sealed abstract class Account {
   val link: String
