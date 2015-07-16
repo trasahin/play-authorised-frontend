@@ -101,7 +101,7 @@ object AgentAssistant extends AgentRole {
 case class AgentAccount(link: String, agentCode: AgentCode, agentUserId: AgentUserId,
                         agentUserRole: AgentRole,
                         payeReference: Option[PayeAgentReference],
-                        agentBusinessUtr: Option[AgentBusinessUtr]) extends Account
+                        agentBusinessUtr: Option[AgentBusinessUtr] = None) extends Account
 
 object AgentAccount {
   implicit val format = Json.format[AgentAccount]
