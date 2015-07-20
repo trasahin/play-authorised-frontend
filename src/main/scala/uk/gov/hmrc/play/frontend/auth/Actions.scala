@@ -28,16 +28,6 @@ sealed trait UserActions
 
   implicit def makeFutureAction(body: AsyncPlayUserRequest): UserAction = (authAction: AuthContext) => Action.async(body(authAction))
 
-  class AuthenticatedBy(authenticationProvider: AuthenticationProvider,
-                        taxRegime: Option[TaxRegime],
-                        redirectToOrigin: Boolean,
-                        pageVisibility: PageVisibilityPredicate) extends AuthenticatedAction {
-    def apply(body: PlayUserRequest): Action[AnyContent] = authorised(authenticationProvider, taxRegime, redirectToOrigin, pageVisibility, body)
-
-    def async(body: AsyncPlayUserRequest): Action[AnyContent] = authorised(authenticationProvider, taxRegime, redirectToOrigin, pageVisibility, body)
-  }
-
-
   def AuthorisedFor(taxRegime: TaxRegime,
                     redirectToOrigin: Boolean = false,
                     pageVisibility: PageVisibilityPredicate = LoaPredicate(LOA_2))
@@ -48,11 +38,20 @@ sealed trait UserActions
                       pageVisibility: PageVisibilityPredicate = LoaPredicate(LOA_2))
   = new AuthenticatedBy(authenticationProvider, None, redirectToOrigin, pageVisibility)
 
-  private def authorised(authenticationProvider: AuthenticationProvider,
-                         taxRegime: Option[TaxRegime],
-                         redirectToOrigin: Boolean,
-                         pageVisibility: PageVisibilityPredicate,
-                         body: UserAction) =
+
+  class AuthenticatedBy(authenticationProvider: AuthenticationProvider,
+                        taxRegime: Option[TaxRegime],
+                        redirectToOrigin: Boolean,
+                        pageVisibility: PageVisibilityPredicate) extends AuthenticatedAction {
+    def apply(body: PlayUserRequest): Action[AnyContent] = authorised(authenticationProvider, taxRegime, redirectToOrigin, pageVisibility, body)
+
+    def async(body: AsyncPlayUserRequest): Action[AnyContent] = authorised(authenticationProvider, taxRegime, redirectToOrigin, pageVisibility, body)
+
+    private def authorised(authenticationProvider: AuthenticationProvider,
+                           taxRegime: Option[TaxRegime],
+                           redirectToOrigin: Boolean,
+                           pageVisibility: PageVisibilityPredicate,
+                           body: UserAction) =
       WithSessionTimeoutValidation(authenticationProvider) {
         WithUserAuthenticatedBy(authenticationProvider, taxRegime, redirectToOrigin) {
           authContext =>
@@ -61,6 +60,8 @@ sealed trait UserActions
             }
         }
       }
+  }
+
 }
 
 

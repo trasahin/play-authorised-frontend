@@ -47,11 +47,11 @@ class AuthorisedForActionSpec extends UnitSpec with BeforeAndAfterEachTestData w
       contentAsString(result) should include("jdensmore")
     }
 
-    "respond 401 if the user has insufficient LoA" in  {
+    "respond 403 if the user has insufficient LoA" in  {
       when(mockAuthConnector.currentAuthority(Matchers.any())).thenReturn(Some(lowAssuranceUser))
       val result = testedActions.testAuthorisation(requestFromLoggedInUser)
 
-      status(result) should be (401)
+      status(result) should be (403)
     }
   }
 
