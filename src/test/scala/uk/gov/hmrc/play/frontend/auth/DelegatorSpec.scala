@@ -25,7 +25,8 @@ class DelegatorSpec extends UnitSpec with WithFakeApplication with Results {
         agentCode = AgentCode("4567"),
         agentUserId = AgentUserId("ABC"),
         agentUserRole = AgentAdmin,
-        payeReference = None
+        payeReference = None,
+        agentBusinessUtr = None
       )))
     ),
     attorney = None
