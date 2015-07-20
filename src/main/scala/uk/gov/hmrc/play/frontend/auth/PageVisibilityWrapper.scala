@@ -18,14 +18,13 @@ case class LoaPredicate(requiredLevelOfAssurance: LevelOfAssurance) extends Page
   override def isVisible(authContext: AuthContext, request: Request[AnyContent]): Future[Boolean] =
     Future.successful(authContext.user.levelOfAssurance >= requiredLevelOfAssurance)
 
-  override def nonVisibleResult: Result = Unauthorized // TODO: other ways to do xx page?
+  override def nonVisibleResult: Result = Forbidden
+
 }
 
 private[auth] object WithPageVisibility {
 
-
   def apply(predicate: PageVisibilityPredicate, authContext: AuthContext)(action: AuthContext => Action[AnyContent]): Action[AnyContent] =
-
     Action.async {
       request =>
         implicit val hc = HeaderCarrier.fromSessionAndHeaders(request.session, request.headers)
