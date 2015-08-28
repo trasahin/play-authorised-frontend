@@ -131,7 +131,7 @@ case class Accounts(paye: Option[PayeAccount] = None,
     ei.map("empRef" -> _.empRef.toString).toMap ++
     agent.map("agentCode" -> _.agentCode).toMap ++
     ated.map("atedUtr" -> _.utr.utr).toMap ++
-    gmp.map("psaId" -> _.psaId.id).toMap ++
+    gmp.map("psaId" -> _.id.id).toMap ++
     taxsAgent.map("uar" -> _.uar.uar).toMap
 }
 
@@ -177,7 +177,7 @@ case class EIAccount(link: String, empRef: EmpRef) extends Account
 
 case class AtedAccount(link: String, utr: AtedUtr) extends Account
 
-case class GmpAccount(link: String, psaId: PsaId) extends Account
+case class GmpAccount(link: String, id: PsaId) extends Account
 
 sealed abstract class Account {
   val link: String
