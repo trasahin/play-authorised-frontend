@@ -34,6 +34,7 @@ case class TaxIdentifiers(paye: Option[Nino] = None,
                           ct: Option[CtUtr] = None,
                           vat: Option[Vrn] = None,
                           epaye: Option[EmpRef] = None,
-                          taxsAgent: Option[Uar] = None)
+                          taxsAgent: Option[Uar] = None,
+                          ated: Option[AtedUtr] = None)
 
 
