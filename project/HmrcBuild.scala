@@ -43,7 +43,7 @@ private object AppDependencies {
     json % "provided",
     ws % "provided",
     "uk.gov.hmrc" %% "http-verbs" % httpVerbsVersion,
-    "uk.gov.hmrc" %% "domain" % "2.11.0-2-g3d2483c"
+    "uk.gov.hmrc" %% "domain" % "2.11.0"
   )
 
   trait TestDependencies {
