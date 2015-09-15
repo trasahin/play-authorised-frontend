@@ -18,7 +18,7 @@ object HmrcBuild extends Build {
     .settings(scalaSettings: _*)
     .settings(defaultSettings(): _*)
     .settings(
-      targetJvm := "jvm-1.7",
+      targetJvm := "jvm-1.8",
       shellPrompt := ShellPrompt(appVersion),
       libraryDependencies ++= AppDependencies(),
       Collaborators(),
