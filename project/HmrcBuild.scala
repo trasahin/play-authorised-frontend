@@ -16,7 +16,8 @@ object HmrcBuild extends Build {
       crossScalaVersions := Seq("2.11.7"),
       libraryDependencies ++= AppDependencies(),
       resolvers := Seq(
-        Resolver.bintrayRepo("hmrc", "releases")
+        Resolver.bintrayRepo("hmrc", "releases"),
+        "typesafe-releases" at "http://repo.typesafe.com/typesafe/releases/"
       )
     )
 }
@@ -29,7 +30,7 @@ private object AppDependencies {
   val httpVerbsVersion = "1.4.1"
 
   val compile = Seq(
-    "com.typesafe.play" %% "play" % PlayVersion.current,
+    "com.typesafe.play" %% "play" % PlayVersion.current % "provided",
     json % "provided",
     ws % "provided",
     "uk.gov.hmrc" %% "http-verbs" % httpVerbsVersion,
