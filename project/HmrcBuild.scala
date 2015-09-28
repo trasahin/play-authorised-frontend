@@ -27,7 +27,7 @@ private object AppDependencies {
   import play.PlayImport._
   import play.core.PlayVersion
 
-  val httpVerbsVersion = "1.4.1"
+  val httpVerbsVersion = "2.2.1"
 
   val compile = Seq(
     "com.typesafe.play" %% "play" % PlayVersion.current % "provided",
@@ -46,11 +46,11 @@ private object AppDependencies {
     def apply() = new TestDependencies {
       override lazy val test = Seq(
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
-        "org.scalatest" %% "scalatest" % "2.2.2" % scope,
-        "org.pegdown" % "pegdown" % "1.4.2" % scope,
+        "org.scalatest" %% "scalatest" % "2.2.4" % scope,
+        "org.pegdown" % "pegdown" % "1.5.0" % scope,
         "com.github.tomakehurst" % "wiremock" % "1.54" % scope excludeAll ExclusionRule(organization = "org.apache.httpcomponents"),
-        "uk.gov.hmrc" %% "http-verbs" % httpVerbsVersion % scope classifier "tests",
-        "uk.gov.hmrc" %% "hmrctest" % "1.0.0" % scope
+        "uk.gov.hmrc" %% "hmrctest" % "1.4.0" % scope,
+        "uk.gov.hmrc" %% "http-verbs-test" % "0.1.0" % scope
       )
     }.test
   }
