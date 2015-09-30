@@ -165,6 +165,7 @@ object Accounts {
     implicit val tfiFormat = Json.format[TaxForIndividualsAccount]
     implicit val taxsAgentFormat = Json.format[TaxSummariesAgentAccount]
     implicit val tcsFormat = Json.format[TaxCreditServiceAccount]
+    implicit val ihtFormat = Json.format[IhtAccount]
     implicit val ninoFormat = Json.format[Nino]
     implicit val orgFormat = Json.format[OrgAccount]
     implicit val agentFormat = Json.format[AgentAccount]
@@ -172,7 +173,6 @@ object Accounts {
     implicit val gmpFormat = Json.format[GmpAccount]
     implicit val atedFormat = Json.format[AtedAccount]
     implicit val awrsFormat = Json.format[AwrsAccount]
-    implicit val ihtFormat = Json.format[IhtAccount]
     Json.format[Accounts]
   }
 }
