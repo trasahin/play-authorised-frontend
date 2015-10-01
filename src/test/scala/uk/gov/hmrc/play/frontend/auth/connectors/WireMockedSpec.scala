@@ -20,7 +20,7 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import org.scalatest.{Suite, BeforeAndAfterEach, BeforeAndAfterAll}
-import uk.gov.hmrc.play.http.ws.PortTester
+import uk.gov.hmrc.play.frontend.auth.PortTester
 
 trait WireMockedSpec extends BeforeAndAfterAll with BeforeAndAfterEach {
 
