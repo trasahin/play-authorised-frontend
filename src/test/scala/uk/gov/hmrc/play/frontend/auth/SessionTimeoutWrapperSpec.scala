@@ -40,6 +40,7 @@ class SessionTimeoutWrapperSpec extends UnitSpec with WithFakeApplication {
   object AnyAuthenticationProviderForTest extends AnyAuthenticationProvider {
     override def login: String = accountLoginPage
     override def ggwAuthenticationProvider: GovernmentGateway = new GovernmentGateway { override def login: String = accountLoginPage }
+    override def verifyAuthenticationProvider: Verify = new Verify { override def login: String = accountLoginPage }
   }
 
   object TestController extends Controller with SessionTimeoutWrapper {

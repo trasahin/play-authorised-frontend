@@ -30,6 +30,7 @@ case class UserCredentials(userId: Option[String], token: Option[String])
 object AuthenticationProviderIds {
   val GovernmentGatewayId = "GGW"
   val AnyAuthenticationProviderId = "IDAorGGW"
+  val VerifyProviderId = "IDA"
 }
 
 trait AuthenticationProvider {
@@ -66,28 +67,45 @@ trait GovernmentGateway extends AuthenticationProvider {
   }
 }
 
+trait Verify extends AuthenticationProvider {
+
+  override val id = AuthenticationProviderIds.VerifyProviderId
+
+  def login: String
+
+  def redirectToLogin(redirectToOrigin: Boolean)(implicit request: Request[AnyContent]) = Future.successful(Redirect(login))
+
+  def handleNotAuthenticated(redirectToOrigin: Boolean)(implicit request: Request[AnyContent]): PartialFunction[UserCredentials, Future[Either[AuthContext, FailureResult]]] = {
+    case UserCredentials(None, None) =>
+      Logger.info(s"No userId found - unauthorized. user: None")
+      redirectToLogin(redirectToOrigin).map(Right(_))
+  }
+}
+
 trait AnyAuthenticationProvider extends AuthenticationProvider {
 
   val id = AuthenticationProviderIds.AnyAuthenticationProviderId
 
   def ggwAuthenticationProvider: GovernmentGateway
+  def verifyAuthenticationProvider: Verify
 
   def login: String
 
-  def redirectToLogin(redirectToOrigin: Boolean)(implicit request: Request[AnyContent]): Future[Result] = {
-    Logger.info("In AnyAuthenticationProvider - redirecting to login page")
-    request.session.get(SessionKeys.authProvider) match {
-      case _ => Future.successful(Redirect(login))
-    }
+  def redirectToLogin(redirectToOrigin: Boolean)(implicit request: Request[AnyContent]) = Future.successful(Redirect(login))
+
+  private def handleMissingProvider(redirectToOrigin: Boolean)(implicit request: Request[AnyContent]): PartialFunction[UserCredentials, Future[Either[AuthContext, FailureResult]]] = {
+    case _ =>
+      Logger.info("No provider in the session")
+      redirectToLogin(redirectToOrigin).map(Right(_))
   }
 
-  def handleNotAuthenticated(redirectToOrigin: Boolean)(implicit request: Request[AnyContent]) = {
+  def handleNotAuthenticated(redirectToOrigin: Boolean)(implicit request: Request[AnyContent]) =
     request.session.get(SessionKeys.authProvider) match {
-      case Some(AuthenticationProviderIds.GovernmentGatewayId) => ggwAuthenticationProvider.handleNotAuthenticated(redirectToOrigin)
-      case _ => {
-        case _ => Future.successful(Right(Redirect(login).withNewSession))
-      }
+      case Some(AuthenticationProviderIds.GovernmentGatewayId) =>
+        ggwAuthenticationProvider.handleNotAuthenticated(redirectToOrigin)
+      case Some(AuthenticationProviderIds.VerifyProviderId) =>
+        verifyAuthenticationProvider.handleNotAuthenticated(redirectToOrigin)
+      case _ =>
+        handleMissingProvider(redirectToOrigin)
     }
-  }
-
 }
