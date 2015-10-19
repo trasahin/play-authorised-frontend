@@ -19,8 +19,7 @@ package uk.gov.hmrc.play.frontend.auth
 import play.api.Logger
 import play.api.mvc.Results._
 import play.api.mvc._
-import uk.gov.hmrc.play.audit.http.HeaderCarrier
-import uk.gov.hmrc.play.http.SessionKeys
+import uk.gov.hmrc.play.http.{HeaderCarrier, SessionKeys}
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext.fromLoggingDetails
 
 import scala.concurrent._
@@ -46,7 +45,7 @@ trait AuthenticationProvider {
 
   def handleAuthenticated(implicit request: Request[AnyContent]): PartialFunction[UserCredentials, Future[Either[AuthContext, Result]]] = PartialFunction.empty
 
-  implicit def hc(implicit request: Request[_]) = HeaderCarrier.fromSessionAndHeaders(request.session, request.headers)
+  implicit def hc(implicit request: Request[_]) = HeaderCarrier.fromHeadersAndSession(request.headers,Some(request.session) )
 }
 
 trait GovernmentGateway extends AuthenticationProvider {

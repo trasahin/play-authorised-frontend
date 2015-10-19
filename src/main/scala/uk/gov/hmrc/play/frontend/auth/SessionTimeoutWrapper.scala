@@ -19,8 +19,7 @@ package uk.gov.hmrc.play.frontend.auth
 import org.joda.time.{DateTime, DateTimeZone, Duration}
 import play.api.Logger
 import play.api.mvc._
-import uk.gov.hmrc.play.audit.http.HeaderCarrier
-import uk.gov.hmrc.play.http.SessionKeys
+import uk.gov.hmrc.play.http.{HeaderCarrier, SessionKeys}
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.time.DateTimeUtils
 
@@ -68,7 +67,7 @@ class WithSessionTimeoutValidation(val now: () => DateTime) extends SessionTimeo
 
   def apply(authenticationProvider: AuthenticationProvider)(action: Action[AnyContent]): Action[AnyContent] = Action.async {
     implicit request: Request[AnyContent] => {
-      implicit val loggingDetails = HeaderCarrier.fromSessionAndHeaders(request.session, request.headers)
+      implicit val loggingDetails = HeaderCarrier.fromHeadersAndSession(request.headers,Some(request.session) )
       val result = if (AuthorisedSessionTimeoutWrapper.userNeedsNewSession(request.session, now)) {
         Logger.info(s"request refused as the session had timed out in ${request.path}")
         authenticationProvider.handleSessionTimeout.flatMap {
@@ -100,7 +99,7 @@ trait SessionTimeout {
   val now: () => DateTime
 
   protected def addTimestamp(request: Request[AnyContent], result: Future[Result]): Future[Result] = {
-    implicit val headerCarrier = HeaderCarrier.fromSessionAndHeaders(request.session, request.headers)
+    implicit val headerCarrier = HeaderCarrier.fromHeadersAndSession(request.headers,Some(request.session) )
     result.map(insertTimestampNow(request))
   }
 

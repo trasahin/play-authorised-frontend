@@ -17,7 +17,6 @@
 package uk.gov.hmrc.play.frontend.auth.connectors
 
 import play.api.libs.json.Json
-import uk.gov.hmrc.play.audit.http.HeaderCarrier
 import uk.gov.hmrc.play.frontend.auth.{TaxIdentifiers, DelegationContext, DelegationData, Link}
 import uk.gov.hmrc.play.http._
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._

@@ -18,9 +18,9 @@ package uk.gov.hmrc.play.frontend.auth
 
 import play.api.mvc.Results._
 import play.api.mvc.{Result, _}
-import uk.gov.hmrc.play.audit.http.HeaderCarrier
 import uk.gov.hmrc.play.frontend.auth.connectors.domain.LevelOfAssurance.LevelOfAssurance
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
+import uk.gov.hmrc.play.http.HeaderCarrier
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.concurrent._
 
@@ -43,7 +43,7 @@ private[auth] object WithPageVisibility {
   def apply(predicate: PageVisibilityPredicate, authContext: AuthContext)(action: AuthContext => Action[AnyContent]): Action[AnyContent] =
     Action.async {
       request =>
-        implicit val hc = HeaderCarrier.fromSessionAndHeaders(request.session, request.headers)
+        implicit val hc = HeaderCarrier.fromHeadersAndSession(request.headers,Some(request.session) )
         predicate.isVisible(authContext, request).flatMap { visible =>
           if (visible)
             action(authContext)(request)
