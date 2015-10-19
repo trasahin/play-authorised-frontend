@@ -18,7 +18,7 @@ package uk.gov.hmrc.play.frontend.auth
 
 import play.api.Logger
 import play.api.mvc._
-import uk.gov.hmrc.play.audit.http.HeaderCarrier
+import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
 import scala.concurrent._
@@ -33,7 +33,7 @@ trait UserActionWrapper extends Results {
                                            (userAction: AuthContext => Action[AnyContent]): Action[AnyContent] =
     Action.async {
       implicit request =>
-        implicit val hc = HeaderCarrier.fromSessionAndHeaders(request.session, request.headers)
+        implicit val hc = HeaderCarrier.fromHeadersAndSession(request.headers,Some(request.session) )
         Logger.info(s"WithUserAuthorisedBy using auth provider ${authenticationProvider.id}")
         val handle =
           authenticationProvider.handleNotAuthenticated(redirectToOrigin) orElse
@@ -50,7 +50,7 @@ trait UserActionWrapper extends Results {
                                  (implicit request: Request[AnyContent]):
   PartialFunction[UserCredentials, Future[Either[AuthContext, Result]]] = {
     case UserCredentials(Some(userId), tokenOption) =>
-      implicit val hc = HeaderCarrier.fromSessionAndHeaders(request.session, request.headers)
+      implicit val hc = HeaderCarrier.fromHeadersAndSession(request.headers,Some(request.session) )
 
       currentAuthContext(UserSessionData(request.session)).flatMap {
 

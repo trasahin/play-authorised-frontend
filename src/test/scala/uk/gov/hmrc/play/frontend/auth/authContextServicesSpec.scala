@@ -20,9 +20,9 @@ import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import uk.gov.hmrc.domain.{CtUtr, Nino, SaUtr}
-import uk.gov.hmrc.play.audit.http.HeaderCarrier
 import uk.gov.hmrc.play.frontend.auth.connectors.domain.LevelOfAssurance.LOA_2
 import uk.gov.hmrc.play.frontend.auth.connectors.{AuthConnector, DelegationConnector, domain}
+import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future

@@ -27,14 +27,15 @@ private object AppDependencies {
   import play.PlayImport._
   import play.core.PlayVersion
 
-  val httpVerbsVersion = "2.2.1"
+  val httpVerbsVersion = "3.0.0"
 
   val compile = Seq(
     "com.typesafe.play" %% "play" % PlayVersion.current % "provided",
     json % "provided",
     ws % "provided",
     "uk.gov.hmrc" %% "http-verbs" % httpVerbsVersion,
-    "uk.gov.hmrc" %% "domain" % "3.1.0"
+    "uk.gov.hmrc" %% "domain" % "3.1.0",
+    "uk.gov.hmrc" %% "play-auditing" % "0.2.0"
   )
 
   trait TestDependencies {
@@ -50,7 +51,9 @@ private object AppDependencies {
         "org.pegdown" % "pegdown" % "1.5.0" % scope,
         "com.github.tomakehurst" % "wiremock" % "1.54" % scope excludeAll ExclusionRule(organization = "org.apache.httpcomponents"),
         "uk.gov.hmrc" %% "hmrctest" % "1.4.0" % scope,
-        "uk.gov.hmrc" %% "http-verbs-test" % "0.1.0" % scope
+        "uk.gov.hmrc" %% "http-verbs-test" % "0.1.0" % scope,
+        "uk.gov.hmrc" %% "play-auditing" % "0.2.0" % scope,
+        "uk.gov.hmrc" %% "play-config" % "2.0.1"
       )
     }.test
   }

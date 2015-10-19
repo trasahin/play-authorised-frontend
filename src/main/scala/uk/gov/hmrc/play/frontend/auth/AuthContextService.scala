@@ -17,10 +17,10 @@
 package uk.gov.hmrc.play.frontend.auth
 
 import play.api.Logger
-import uk.gov.hmrc.play.audit.http.HeaderCarrier
 import uk.gov.hmrc.play.frontend.auth.connectors.domain.Authority
 import uk.gov.hmrc.play.frontend.auth.connectors.{AuthConnector, DelegationConnector}
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
+import uk.gov.hmrc.play.http.HeaderCarrier
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.concurrent.Future
 

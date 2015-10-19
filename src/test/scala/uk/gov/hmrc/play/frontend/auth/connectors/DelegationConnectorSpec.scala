@@ -17,15 +17,19 @@
 package uk.gov.hmrc.play.frontend.auth.connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
+import org.mockito.Mockito
 import org.scalatest.mock.MockitoSugar
 import play.api.libs.json.Json
 import uk.gov.hmrc.domain.{Nino, SaUtr}
-import uk.gov.hmrc.play.audit.http.HeaderCarrier
+import uk.gov.hmrc.play.audit.http.HttpAuditing
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.config.{RunMode, AppName}
+import uk.gov.hmrc.play.frontend.auth.audit.WSHttp
 import uk.gov.hmrc.play.frontend.auth.connectors.domain.{Accounts, PayeAccount, SaAccount}
 import uk.gov.hmrc.play.frontend.auth._
-import uk.gov.hmrc.play.http.{Upstream5xxResponse, BadRequestException}
-import uk.gov.hmrc.play.http.ws.WSHttp
+import uk.gov.hmrc.play.http.hooks.HttpHook
+import uk.gov.hmrc.play.http.{HeaderCarrier, Upstream5xxResponse, BadRequestException}
+import uk.gov.hmrc.play.http.ws._
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
 class DelegationConnectorSpec extends UnitSpec with WithFakeApplication with WireMockedSpec {
@@ -87,23 +91,23 @@ class DelegationConnectorSpec extends UnitSpec with WithFakeApplication with Wir
       stubFor(get(urlEqualTo(s"/oid/$oid400")).willReturn(aResponse().withStatus(400)))
       stubFor(get(urlEqualTo(s"/oid/$oid500")).willReturn(aResponse().withStatus(500)))
 
-      a [DelegationServiceException] should be thrownBy await(connector.getDelegationData(oid204))
-      a [DelegationServiceException] should be thrownBy await(connector.getDelegationData(oid400))
-      a [DelegationServiceException] should be thrownBy await(connector.getDelegationData(oid500))
+      a[DelegationServiceException] should be thrownBy await(connector.getDelegationData(oid204))
+      a[DelegationServiceException] should be thrownBy await(connector.getDelegationData(oid400))
+      a[DelegationServiceException] should be thrownBy await(connector.getDelegationData(oid500))
     }
 
     "throw an exception if the response is not valid JSON" in new TestCase {
 
       stubFor(get(urlEqualTo(s"/oid/$oid")).willReturn(aResponse().withStatus(200).withBody("{ not _ json :")))
 
-      a [DelegationServiceException] should be thrownBy await(connector.getDelegationData(oid))
+      a[DelegationServiceException] should be thrownBy await(connector.getDelegationData(oid))
     }
 
     "throw an exception if the response is valid JSON, but not representing Delegation Data" in new TestCase {
 
-      stubFor(get(urlEqualTo(s"/oid/$oid")).willReturn(aResponse().withStatus(200).withBody("""{"valid":"json"}""")))
+      stubFor(get(urlEqualTo(s"/oid/$oid")).willReturn(aResponse().withStatus(200).withBody( """{"valid":"json"}""")))
 
-      a [DelegationServiceException] should be thrownBy await(connector.getDelegationData(oid))
+      a[DelegationServiceException] should be thrownBy await(connector.getDelegationData(oid))
     }
   }
 
@@ -153,10 +157,10 @@ class DelegationConnectorSpec extends UnitSpec with WithFakeApplication with Wir
       stubFor(put(urlEqualTo(s"/oid/$oid400")).withRequestBody(equalToJson(delegationContextJson)).willReturn(aResponse().withStatus(400)))
       stubFor(put(urlEqualTo(s"/oid/$oid500")).withRequestBody(equalToJson(delegationContextJson)).willReturn(aResponse().withStatus(500)))
 
-      a [DelegationServiceException] should be thrownBy await(connector.startDelegation(oid200, delegationContextObject))
-      a [DelegationServiceException] should be thrownBy await(connector.startDelegation(oid204, delegationContextObject))
-      a [BadRequestException] should be thrownBy await(connector.startDelegation(oid400, delegationContextObject))
-      a [Upstream5xxResponse] should be thrownBy await(connector.startDelegation(oid500, delegationContextObject))
+      a[DelegationServiceException] should be thrownBy await(connector.startDelegation(oid200, delegationContextObject))
+      a[DelegationServiceException] should be thrownBy await(connector.startDelegation(oid204, delegationContextObject))
+      a[BadRequestException] should be thrownBy await(connector.startDelegation(oid400, delegationContextObject))
+      a[Upstream5xxResponse] should be thrownBy await(connector.startDelegation(oid500, delegationContextObject))
     }
   }
 
@@ -192,10 +196,10 @@ class DelegationConnectorSpec extends UnitSpec with WithFakeApplication with Wir
       stubFor(delete(urlEqualTo(s"/oid/$oid400")).willReturn(aResponse().withStatus(400)))
       stubFor(delete(urlEqualTo(s"/oid/$oid500")).willReturn(aResponse().withStatus(500)))
 
-      a [DelegationServiceException] should be thrownBy await(connector.endDelegation(oid200))
-      a [DelegationServiceException] should be thrownBy await(connector.endDelegation(oid201))
-      a [DelegationServiceException] should be thrownBy await(connector.endDelegation(oid400))
-      a [DelegationServiceException] should be thrownBy await(connector.endDelegation(oid500))
+      a[DelegationServiceException] should be thrownBy await(connector.endDelegation(oid200))
+      a[DelegationServiceException] should be thrownBy await(connector.endDelegation(oid201))
+      a[DelegationServiceException] should be thrownBy await(connector.endDelegation(oid400))
+      a[DelegationServiceException] should be thrownBy await(connector.endDelegation(oid500))
     }
   }
 
@@ -207,12 +211,15 @@ class DelegationConnectorSpec extends UnitSpec with WithFakeApplication with Wir
 
       override protected val serviceUrl = baseUrl
 
-      override protected lazy val http = new WSHttp {
-        override def auditConnector: AuditConnector = mock[AuditConnector]
-        override def appName: String = "DelegationConnectorSpec"
-      }
+      override protected lazy val http = WSHttpMock
     }
 
     val oid = "1234"
   }
+
+  object WSHttpMock extends WSGet with WSPut with WSPost with WSDelete with WSPatch with AppName with RunMode with HttpAuditing with MockitoSugar {
+    override val hooks = Seq(AuditingHook)
+    override val auditConnector = mock[AuditConnector]
+  }
+
 }
