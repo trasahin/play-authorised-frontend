@@ -17,18 +17,13 @@
 package uk.gov.hmrc.play.frontend.auth.connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
-import org.mockito.Mockito
 import org.scalatest.mock.MockitoSugar
 import play.api.libs.json.Json
 import uk.gov.hmrc.domain.{Nino, SaUtr}
-import uk.gov.hmrc.play.audit.http.HttpAuditing
-import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.config.{RunMode, AppName}
-import uk.gov.hmrc.play.frontend.auth.audit.WSHttp
-import uk.gov.hmrc.play.frontend.auth.connectors.domain.{Accounts, PayeAccount, SaAccount}
 import uk.gov.hmrc.play.frontend.auth._
+import uk.gov.hmrc.play.frontend.auth.connectors.domain.{Accounts, PayeAccount, SaAccount}
+import uk.gov.hmrc.play.http._
 import uk.gov.hmrc.play.http.hooks.HttpHook
-import uk.gov.hmrc.play.http.{HeaderCarrier, Upstream5xxResponse, BadRequestException}
 import uk.gov.hmrc.play.http.ws._
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
@@ -211,15 +206,14 @@ class DelegationConnectorSpec extends UnitSpec with WithFakeApplication with Wir
 
       override protected val serviceUrl = baseUrl
 
-      override protected lazy val http = WSHttpMock
+      override protected lazy val http = new WSHttp {
+        override val hooks: Seq[HttpHook] = NoneRequired
+      }
     }
 
     val oid = "1234"
   }
 
-  object WSHttpMock extends WSGet with WSPut with WSPost with WSDelete with WSPatch with AppName with RunMode with HttpAuditing with MockitoSugar {
-    override val hooks = Seq(AuditingHook)
-    override val auditConnector = mock[AuditConnector]
-  }
+
 
 }
