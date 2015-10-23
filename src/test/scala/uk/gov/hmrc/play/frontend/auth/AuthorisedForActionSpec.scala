@@ -29,10 +29,10 @@ import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.auth.connectors.domain.{Accounts, Authority, LevelOfAssurance, SaAccount}
 import uk.gov.hmrc.play.http.SessionKeys
+import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import uk.gov.hmrc.time.DateTimeUtils.now
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class AuthorisedForActionSpec extends UnitSpec with BeforeAndAfterEachTestData with MockitoSugar with WithFakeApplication {

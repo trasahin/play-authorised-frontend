@@ -34,8 +34,7 @@ private object AppDependencies {
     json % "provided",
     ws % "provided",
     "uk.gov.hmrc" %% "http-verbs" % httpVerbsVersion,
-    "uk.gov.hmrc" %% "domain" % "3.1.0",
-    "uk.gov.hmrc" %% "play-auditing" % "0.2.0"
+    "uk.gov.hmrc" %% "domain" % "3.1.0"
   )
 
   trait TestDependencies {
@@ -51,9 +50,7 @@ private object AppDependencies {
         "org.pegdown" % "pegdown" % "1.5.0" % scope,
         "com.github.tomakehurst" % "wiremock" % "1.54" % scope excludeAll ExclusionRule(organization = "org.apache.httpcomponents"),
         "uk.gov.hmrc" %% "hmrctest" % "1.4.0" % scope,
-        "uk.gov.hmrc" %% "http-verbs-test" % "0.1.0" % scope,
-        "uk.gov.hmrc" %% "play-auditing" % "0.2.0" % scope,
-        "uk.gov.hmrc" %% "play-config" % "2.0.1"
+        "uk.gov.hmrc" %% "http-verbs-test" % "0.1.0" % scope
       )
     }.test
   }
