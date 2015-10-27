@@ -139,7 +139,7 @@ case class Accounts(paye: Option[PayeAccount] = None,
                     awrs: Option[AwrsAccount] = None,
                     gmp: Option[GmpAccount] = None,
                     iht: Option[IhtAccount] = None) {
-  def toMap = Map() ++
+  def toMap: Map[String, String] = Map() ++
     sa.map("saUtr" -> _.utr.utr).toMap ++
     vat.map("vrn" -> _.vrn.vrn).toMap ++
     ct.map("ctUtr" -> _.utr.utr).toMap ++
@@ -147,12 +147,18 @@ case class Accounts(paye: Option[PayeAccount] = None,
     paye.map("nino" -> _.nino.nino).toMap ++
     org.map("org" -> _.org.org).toMap ++
     ei.map("empRef" -> _.empRef.toString).toMap ++
-    agent.map("agentCode" -> _.agentCode).toMap ++
+    agent.map("agentCode" -> _.agentCode.toString()).toMap ++
     ated.map("atedUtr" -> _.utr.utr).toMap ++
     awrs.map("awrsUtr" -> _.utr.utr).toMap ++
     gmp.map("psaId" -> _.id.id).toMap ++
     taxsAgent.map("uar" -> _.uar.uar).toMap ++
     iht.map("iht" -> _.nino.nino).toMap
+
+  def contains(account: Account) = {
+    account match {
+      case a: PayeAccount => toMap.contains("nino")
+    }
+  }
 }
 
 object Accounts {
